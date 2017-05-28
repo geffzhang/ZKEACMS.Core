@@ -40,14 +40,14 @@ namespace ZKEACMS.Widget
             {
                 WidgetBasePartService.Remove(item.ID);
                 throw ex;
-            }            
+            }
         }
 
-        public override void Update(T item)
+        public override void Update(T item, bool saveImmediately = true)
         {
             WidgetBasePartService.Update(item.ToWidgetBasePart());
 
-            base.Update(item);  
+            base.Update(item, saveImmediately);
         }
         public override void UpdateRange(params T[] items)
         {
@@ -85,12 +85,9 @@ namespace ZKEACMS.Widget
             {
                 WidgetBasePartService.Get(primaryKeys).CopyTo(model);
             }
-            else
+            if (model == null)
             {
-                var basePart = new WidgetBasePart { ID = primaryKeys[0].ToString() };
-                DbContext.WidgetBasePart.Attach(basePart);
-                DbContext.WidgetBasePart.Remove(basePart);
-                DbContext.SaveChanges();
+                throw new Exception("Get widget error. Widget ID:" + string.Join(",", primaryKeys));
             }
             return model;
         }
@@ -102,11 +99,11 @@ namespace ZKEACMS.Widget
             WidgetBasePartService.Remove(Expression.Lambda<Func<WidgetBase, bool>>(filter.Body, filter.Parameters));
 
         }
-        
-        public override void Remove(T item)
+
+        public override void Remove(T item, bool saveImmediately = true)
         {
 
-            base.Remove(item);
+            base.Remove(item, saveImmediately);
 
             WidgetBasePartService.Remove(WidgetBasePartService.Get(item.ID));
 
@@ -127,13 +124,12 @@ namespace ZKEACMS.Widget
             if (result != null)
             {
                 widget.CopyTo(result);
-                return result;
             }
-            var basePart = widget.ToWidgetBasePart();
-            DbContext.WidgetBasePart.Attach(basePart);
-            DbContext.WidgetBasePart.Remove(basePart);
-            DbContext.SaveChanges();
-            return null;
+            if (result == null)
+            {
+                throw new Exception("Get widget error. Widget ID:" + widget.ID);
+            }
+            return result;
         }
 
         public virtual WidgetViewModelPart Display(WidgetBase widget, ActionContext actionContext)

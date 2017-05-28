@@ -47,14 +47,14 @@ namespace ZKEACMS.Page
             base.Add(item);
         }
 
-        public override void Update(PageEntity item)
+        public override void Update(PageEntity item, bool saveImmediately = true)
         {
             if (Count(m => m.ID != item.ID && m.Url == item.Url && m.IsPublishedPage == false) > 0)
             {
                 throw new PageExistException(item);
             }
             item.IsPublish = false;
-            base.Update(item);
+            base.Update(item, saveImmediately);
         }
 
         public void Publish(PageEntity item)
@@ -144,10 +144,10 @@ namespace ZKEACMS.Page
                 }
             }
         }
-        public override void Remove(PageEntity item)
+        public override void Remove(PageEntity item, bool saveImmediately = true)
         {
             Remove(m => m.ParentId == item.ID);
-            var widgets = _widgetService.Get(m => m.PageID == item.ID);
+            var widgets = _widgetService.GetByPageId(item.ID);
             widgets.Each(m =>
             {
                 using (var widgetService = _widgetActivator.Create(m))
@@ -160,7 +160,7 @@ namespace ZKEACMS.Page
                 Remove(m => m.ReferencePageID == item.ID);
             }
             _widgetService.RemoveCache(item.ID);
-            base.Remove(item);
+            base.Remove(item, saveImmediately);
         }
 
         public override void Remove(Expression<Func<PageEntity, bool>> filter)
@@ -171,7 +171,7 @@ namespace ZKEACMS.Page
                 Remove(m => deletes.Any(d => d == m.ParentId));
                 Remove(m => deletes.Any(d => d == m.ReferencePageID));
 
-                var widgets = _widgetService.Get(m => deletes.Any(n => n == m.PageID));
+                var widgets = _widgetService.Get(m => deletes.Any(n => n == m.PageID)).ToList();
                 widgets.Each(m =>
                 {
                     using (var widgetService = _widgetActivator.Create(m))
@@ -188,7 +188,7 @@ namespace ZKEACMS.Page
         }
         public override void RemoveRange(params PageEntity[] items)
         {
-            items.Each(Remove);
+            items.Each(m => Remove(m));
         }
 
         public void DeleteVersion(string ID)
@@ -196,7 +196,7 @@ namespace ZKEACMS.Page
             PageEntity page = Get(ID);
             if (page != null)
             {
-                var widgets = _widgetService.Get(m => m.PageID == page.ID);
+                var widgets = _widgetService.GetByPageId(page.ID);
                 widgets.Each(m => _widgetActivator.Create(m).DeleteWidget(m.ID));
                 _widgetService.RemoveCache(ID);
             }
@@ -263,10 +263,17 @@ namespace ZKEACMS.Page
         public void MarkChanged(string pageId)
         {
             var pageEntity = Get(pageId);
-            pageEntity.IsPublish = false;
-            pageEntity.LastUpdateDate = DateTime.Now;
-            pageEntity.LastUpdateBy = ApplicationContext.CurrentUser.UserID;
-            base.Update(pageEntity);
+            if (pageEntity != null)
+            {
+                pageEntity.IsPublish = false;
+                pageEntity.LastUpdateDate = DateTime.Now;
+                if (ApplicationContext.CurrentUser != null)
+                {
+                    pageEntity.LastUpdateBy = ApplicationContext.CurrentUser.UserID;
+                    pageEntity.LastUpdateByName = ApplicationContext.CurrentUser.UserName;
+                }
+                base.Update(pageEntity);
+            }
         }
     }
 }
