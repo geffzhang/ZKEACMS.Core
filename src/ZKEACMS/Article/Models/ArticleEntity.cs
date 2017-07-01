@@ -11,7 +11,7 @@ using System.ComponentModel.DataAnnotations;
 namespace ZKEACMS.Article.Models
 {
     [ViewConfigure(typeof(ArticleEntityMeta)), Table("Article")]
-    public class ArticleEntity : EditorEntity, IImage, IExtendField
+    public class ArticleEntity : EditorEntity, IImage
     {
         [Key]
         public int ID { get; set; }
@@ -28,12 +28,7 @@ namespace ZKEACMS.Article.Models
 
         public int? ArticleTypeID { get; set; }
         public DateTime? PublishDate { get; set; }
-        public bool IsPublish { get; set; }
-
-        public IEnumerable<ExtendFieldEntity> ExtendFields
-        {
-            get; set;
-        }
+        public bool IsPublish { get; set; }        
     }
     class ArticleEntityMeta : ViewMetaData<ArticleEntity>
     {
@@ -44,7 +39,14 @@ namespace ZKEACMS.Article.Models
             ViewConfig(m => m.Status).AsDropDownList().DataSource(DicKeys.RecordStatus, SourceType.Dictionary);
             ViewConfig(m => m.ImageThumbUrl).AsTextBox().AddClass(StringKeys.SelectImageClass).AddProperty("data-url", Urls.SelectMedia);
             ViewConfig(m => m.ImageUrl).AsTextBox().AddClass(StringKeys.SelectImageClass).AddProperty("data-url", Urls.SelectMedia);
-            ViewConfig(m => m.ArticleTypeID).AsDropDownList().DataSource(ViewDataKeys.ArticleCategory, SourceType.ViewData).Required().AddClass("select").AddProperty("data-url", "/admin/ArticleType/Select");
+            ViewConfig(m => m.ArticleTypeID)
+                .AsDropDownList()
+                .DataSource(ViewDataKeys.ArticleCategory, SourceType.ViewData)
+                .Required()
+                .AddClass("select")
+                .AddProperty("data-url", "/admin/ArticleType/Select")
+                .ShowInGrid();
+
             ViewConfig(m => m.ArticleContent).AsTextArea().AddClass(StringKeys.HtmlEditorClass);
             ViewConfig(m => m.PublishDate).AsTextBox().Hide();
             ViewConfig(m => m.IsPublish).AsTextBox().Hide().ShowInGrid();

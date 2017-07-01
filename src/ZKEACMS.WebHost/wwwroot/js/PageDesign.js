@@ -89,11 +89,7 @@
             width: 1024,
             title: "编辑样式",
             onLoad: function (box) {
-                var win = this;
-                $(this.document).find("#confirm").click(function () {
-                    obj.val(win.GetSelected());
-                    box.close();
-                });
+                
             },
             callBack: function () {
                 $.post(url, { style: styleTarget.attr("style") }, function () {
@@ -104,7 +100,7 @@
         $(".WeiWindow.BoxShadow").addClass("StyleEditor");
     }).on("click", ".copy-widget", function() {
         $.post($(this).data("action"), function (data) {
-            Easy.MessageTip.Show(data.Message);
+            Easy.MessageTip.Show(data.message);
         });
     }).on("click", ".paste-widget", function () {
         var zone = $(this).closest(".zone");

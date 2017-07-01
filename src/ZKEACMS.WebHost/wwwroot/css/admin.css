@@ -31,9 +31,44 @@ img {
     padding-right: 15px;
 }
 
-@media (min-width: 1300px) {
+    .form-horizontal .control-label {
+        display: block;
+        text-align: right;
+    }
+
+@media (max-width:1199px) {
+    .form-horizontal .control-label {
+        padding-top: 0;
+        margin-bottom: 7px;
+        text-align: left;
+    }
+}
+
+.field-validation-error {
+    top: 10px;
+    position: relative;
+    display: block;
+    background: #ca2026;
+    color: white;
+    padding: .5rem;
+    font-size: 14px;
+}
+
+    .field-validation-error:before {
+        content: " ";
+        display: block;
+        border-top: 2px solid transparent;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #ca2026;
+        position: absolute;
+        left: 10px;
+        top: -10px;
+    }
+
+@media (min-width: 1440px) {
     .form-horizontal {
-        width: 70%;
+        width: 85%;
     }
 }
 
@@ -41,9 +76,11 @@ img {
 .input-group .form-control {
     position: static;
 }
+
 .form-control.required {
     background-color: #fff0dd;
 }
+
 a.badge:hover {
     background-color: #1F1F1F;
 }
@@ -166,17 +203,6 @@ a.badge:hover {
     margin: 15px -15px -15px -15px;
 }
 
-
-
-
-.field-validation-error {
-    display: block;
-    font-size: 13px;
-    color: red;
-    background: url(images/Error-16.png) left center no-repeat;
-    padding: 5px 0 0 20px;
-}
-
 .input-group .mce-panel {
     border: 1px solid #ccc;
     border-radius: 0;
@@ -247,37 +273,57 @@ a.badge:hover {
     background-color: white;
     border: 1px solid #ccc;
     border-radius: 4px;
-    padding-top: 3px;
-    padding-bottom: 3px;
+    padding-bottom: 8px;
 }
 
-    .input-group-collection .row {
-        margin-top: 3px;
-        margin-bottom: 3px;
-        position: relative;
+    
+
+    .input-group-collection .btn.add {
+        margin-top: 8px;
     }
+    .input-group-collection .items {
+       
+    }
+        .input-group-collection .items .item {
+            display:block;
+            position: relative;
+            border-bottom: 1px solid #f2f2f2;
+        }
+
+        .input-group-collection .item .form-group {
+            margin: 8px 0;
+        }
 
     .input-group-collection .delete {
         position: absolute;
-        left: 2px;
-        top: 50%;
+        right: 10px;
+        top: 10px;
         color: red;
     }
 
 
-.jstree a[ispublish="false"] {
-    color: #808080;
+.jstree a::after {
+    font-weight: normal;
+    color: #b4b4b4;
+    font-size: 11px;
+    line-height: 20px;
+}
+
+.jstree a[ispublish="false"],
+.jstree a[publishdate="null"] {
+    color: green;
 }
 
     .jstree a[ispublish="false"]::after {
-        content: " [已修改]";
+        content: " (已修改";
     }
 
-.jstree a[publishdate="null"]::after {
-    content: " [未发布]";
-}
+    .jstree a[publishdate="null"]::after {
+        content: " (未发布";
+    }
 
-.jstree a[ishomepage="true"] {
+.jstree a[ishomepage="true"],
+.jstree a[url="~/index"] {
     font-weight: bold;
     color: red;
 }
@@ -418,15 +464,15 @@ a.badge:hover {
 #media-list .thumbnail .tool {
     position: absolute;
     left: 20px;
-    bottom:50px;
-    width:100%;
-    text-align:left;
+    bottom: 50px;
+    width: 100%;
+    text-align: left;
 }
 
-#media-list .thumbnail .tool a {
-    margin: 0 3px;
-    color: #3D3E43;
-}
+    #media-list .thumbnail .tool a {
+        margin: 0 3px;
+        color: #3D3E43;
+    }
 
 #media-list .thumbnail .close:hover {
     opacity: 1;
@@ -443,39 +489,50 @@ a.badge:hover {
 .navbar-inverse .navbar-nav > li a:hover {
     background-color: #000;
 }
-.dataTable{
-    background-color:#fff;
-}
-.dataTable thead,
-.dataTable tfoot {
+
+.dataTable {
     background-color: #fff;
 }
 
-.dataTable .input-group-addon{
-    cursor:pointer;
-}
-.dataTable .form-control{
-    font-weight:normal;
-}
-.dataTable .range-search{
-    position:relative;
-}
-.dataTable .range-search input.max{
-    display:none;
-    position: absolute;
-    left: 0;
-    bottom: -100%;
-    width: 100%;
-    z-index: 2;
-    margin-bottom:-2px;
+    .dataTable thead,
+    .dataTable tfoot {
+        background-color: #fff;
+    }
+
+    .dataTable .input-group-addon {
+        cursor: pointer;
+    }
+
+    .dataTable .form-control {
+        font-weight: normal;
+        width: 100%;
+    }
+
+    .dataTable .range-search {
+        position: relative;
+    }
+
+        .dataTable .range-search input.max {
+            display: none;
+            position: absolute;
+            left: 0;
+            bottom: -100%;
+            width: 100%;
+            z-index: 2;
+            margin-bottom: -2px;
+        }
+
+            .dataTable .range-search input.max.show {
+                display: block;
+            }
+
+table.table-bordered.dataTable th, table.table-bordered.dataTable td {
+    white-space: nowrap;
 }
 
-.dataTable .range-search input.max.show{
-    display:block;
-}
 div.dataTables_wrapper div.dataTables_processing {
     text-indent: -5000px;
-    background:#fff url('../js/EasyPlug/Css/Images/loader.gif') center center no-repeat;
-    width:50px;
-    margin-left:-25px;
+    background: #fff url('../js/EasyPlug/Css/Images/loader.gif') center center no-repeat;
+    width: 50px;
+    margin-left: -25px;
 }

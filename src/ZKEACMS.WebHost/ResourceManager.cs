@@ -54,7 +54,7 @@ namespace ZKEACMS.WebHost
                 .Include($"{ScriptPath}/admin.js", $"{ScriptPath}/admin.min.js")
                 .Include($"{LibraryPath}/CryptoJS/components/core.js", $"{LibraryPath}/CryptoJS/components/core-min.js")
                 .Include($"{LibraryPath}/CryptoJS/components/enc-base64.js", $"{LibraryPath}/CryptoJS/components/enc-base64-min.js")
-                .Include($"{LibraryPath}/slimscroll/jquery.slimscroll.js", $"{LibraryPath}/slimscroll/jquery.slimscroll.min.js");
+                .Include($"{LibraryPath}/slimscroll/jquery.slimscroll.min.js", $"{LibraryPath}/slimscroll/jquery.slimscroll.min.js");
 
             script("tinymce")
                 .Include($"{ScriptPath}/tinymce/tinymce.min.js")
@@ -68,6 +68,9 @@ namespace ZKEACMS.WebHost
             script("datepicker")
                 .Include($"{LibraryPath}/bootstrap-datepicker/dist/js/bootstrap-datepicker.js", $"{LibraryPath}/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js")
                 .Include($"{LibraryPath}/bootstrap-datepicker/dist/locales/bootstrap-datepicker.zh-CN.min.js");
+
+            script("pjax")
+                .Include($"{LibraryPath}/jquery-pjax/jquery.pjax.js");
         }
 
         protected override void InitStyle(Func<string, ResourceHelper> style)

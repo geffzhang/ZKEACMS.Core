@@ -58,6 +58,7 @@ namespace ZKEACMS.Widget
                 {
                     layoutService.MarkChanged(widget.LayoutID);
                 }
+                PageWidgetCacheManage.ClearRegion(_httpContextAccessor.HttpContext.Request.Host.Value);
             }
         }
 
@@ -120,10 +121,7 @@ namespace ZKEACMS.Widget
         {
             var widgetBasePart = Get(widget.ID);
             if (widgetBasePart == null) return null;
-            if (widgetBasePart.ExtendFields != null)
-            {
-                widgetBasePart.ExtendFields.Each(f => { f.ActionType = ActionType.Create; });
-            }
+
             var service = _widgetActivator.Create(widgetBasePart);
             var widgetBase = service.GetWidget(widgetBasePart.ToWidgetBase());
 

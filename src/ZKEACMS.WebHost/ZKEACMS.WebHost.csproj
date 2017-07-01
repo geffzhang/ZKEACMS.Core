@@ -25,12 +25,11 @@
     <Content Include="wwwroot\images\Widget.Breadcrumb.png" />
     <Content Include="wwwroot\Themes\Default\css\Article.less" />
     <Content Include="wwwroot\Themes\Default\css\Base.less" />
-    <Content Include="wwwroot\Themes\Default\css\Bootstrap.less" />
-    <Content Include="wwwroot\Themes\Default\css\Bootstrap.Theme.less" />
     <Content Include="wwwroot\Themes\Default\css\Carousel.less" />
     <Content Include="wwwroot\Themes\Default\css\Library.less" />
     <Content Include="wwwroot\Themes\Default\css\Navigation.less" />
     <Content Include="wwwroot\Themes\Default\css\Pagination.less" />
+    <Content Include="wwwroot\themes\Default\css\Panel.less" />
     <Content Include="wwwroot\Themes\Default\css\Product.less" />
     <Content Include="wwwroot\Themes\Default\css\Section.less" />
     <Content Include="wwwroot\Themes\Default\css\theme.css" />
@@ -91,7 +90,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="1.1.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.2" />
-    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.0.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="1.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.Precompilation.Design" Version="1.0.0-preview1-final" />
     <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
@@ -112,6 +111,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\lib\slimscroll\" />
     <Folder Include="wwwroot\Logs\" />
   </ItemGroup>
 

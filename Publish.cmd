@@ -12,20 +12,13 @@
 @echo .NET Core 运行时标识符 (RID) 目录
 @echo https://docs.microsoft.com/zh-cn/dotnet/articles/core/rid-catalog
 @echo -----------------------------------------------------------------------------
-@pause
-for /f %%a in ('dir src /b') do (
-	@echo ------------------ Build %%a ------------------
-	cd src/%%a
-	dotnet restore
-	dotnet build
-	cd ../../
-)
+@echo ------------------- Build -------------------
+dotnet build -c Release ZKEACMS.sln
 @echo ------------------ Release ------------------
 cd src/ZKEACMS.WebHost
 dotnet publish -c Release -o ./bin/Release/PublishOutput
 cd ../../
 cd PluginPublisher
-dotnet restore
 dotnet run
 cd ../
 set current_path=%cd%
