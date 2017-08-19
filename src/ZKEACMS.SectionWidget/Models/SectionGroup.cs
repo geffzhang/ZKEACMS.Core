@@ -125,11 +125,13 @@ namespace ZKEACMS.SectionWidget.Models
             ViewConfig(m => m.GroupName).AsTextBox().Required();
             ViewConfig(m => m.ID).AsHidden();
             ViewConfig(m => m.SectionWidgetId).AsHidden();
+            ViewConfig(m => m.Order).AsHidden();
+            ViewConfig(m => m.Status).AsHidden();
             ViewConfig(m => m.IsLoadDefaultData).AsHidden().Ignore();
             ViewConfig(m => m.PartialView).AsDropDownList().DataSource(() =>
             {
                 return ServiceLocator.GetService<ISectionTemplateService>()
-                    .GetAll()
+                    .Get()
                     .ToDictionary(m => m.TemplateName, m => m.Title);
             });
             ViewConfig(m => m.Title).AsHidden();

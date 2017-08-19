@@ -1,6 +1,7 @@
 ﻿/*!
  * http://www.zkea.net/
  * Copyright 2017 ZKEASOFT
+ * 深圳市纸壳软件有限公司
  * http://www.zkea.net/licenses
  */
 
@@ -76,7 +77,20 @@ img {
 .input-group .form-control {
     position: static;
 }
-
+.input-group.loading::before{
+    display:block;
+    content:" ";
+    position:absolute;
+    height:2px;
+    bottom:0;
+    left:0;
+    width:0;
+    background:red;
+}
+.input-group.loading.processing::before {
+    width: 100%;
+    transition: width 2s;
+}
 .form-control.required {
     background-color: #fff0dd;
 }
@@ -234,7 +248,6 @@ a.badge:hover {
     padding: 1px 0;
     list-style: none;
     color: #717171;
-    min-height: 85px;
 }
 
     .fullRowList li {
@@ -369,9 +382,9 @@ a.badge:hover {
     }
 
     .simplePreview .panel-toolbar {
-        position: absolute;
-        right: 0;
-        top: 0;
+        text-align:center;
+        margin-top:5px;
+        padding:0 0 5px;
     }
 
     .simplePreview .simpleDesign > .container {
@@ -465,7 +478,7 @@ a.badge:hover {
     position: absolute;
     left: 20px;
     bottom: 50px;
-    width: 100%;
+    text-shadow:0px 0px 5px #fff;
     text-align: left;
 }
 
@@ -525,7 +538,9 @@ a.badge:hover {
             .dataTable .range-search input.max.show {
                 display: block;
             }
-
+            .dataTable .glyphicon{
+                margin:0 3px;
+            }
 table.table-bordered.dataTable th, table.table-bordered.dataTable td {
     white-space: nowrap;
 }

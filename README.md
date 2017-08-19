@@ -1,23 +1,23 @@
 ﻿# ZKEACMS Build With Asp.Net Core 1.1
 ![BuildSuccess](http://cdn.zkeasoft.com/images/buildsuccess.svg) 
 
+### 演示
+[http://demo.zkea.net](http://demo.zkea.net)
+
 ### 简介
-ZKEACMS Core 是基于 ZKEACMS 的 Asp.Net Core 版本。
+纸壳CMS 是基于 ZKEACMS 的 Asp.Net Core 版本。
 
 ### 架设环境：
 
-.Net Core 跨平台
+.Net Core 2.0
 
-Microsoft Sql Serverl 2008 或以上
-
-.Net Core 1.1 
-ASP.NET Core MVC
+Microsoft Sql Serverl 2008+
 
 ### 开发环境
 
-Microsoft VisualStudio 2017
+Microsoft VisualStudio 2017 15.3+
 
-Microsoft Sql Server 2008 以上
+Microsoft Sql Server 2008+
 
 ## 创建页面的简单流程和基本思想
 [http://www.zkea.net/zkeacms/createpage](http://www.zkea.net/zkeacms/createpage)
@@ -31,10 +31,8 @@ Microsoft Sql Server 2008 以上
 
 ## 移动友好
 ![移动友好](http://ww2.sinaimg.cn/large/005zTNGqgw1f7l2aq95fvj30ae0fswf2.jpg)
-### 手机扫码体检
-![手机扫码体检](http://ww1.sinaimg.cn/large/005zTNGqgw1f7l2d7386rj307s07smxl.jpg)
 
-ZKEACMS采用了现代的响应式设计，可以自动适配不同大小的屏幕和设备。从PC，笔记本，电视，平板到手机页面都会自动响应适应。
+纸壳CMS采用了现代的响应式设计，可以自动适配不同大小的屏幕和设备。从PC，笔记本，电视，平板到手机页面都会自动响应适应。
 
 ## 布局设计
 ![布局设计](https://cloud.githubusercontent.com/assets/6006218/23800807/b4298c0a-05e8-11e7-834f-fef335e64a94.jpg)
@@ -64,14 +62,14 @@ ZKEACMS采用了现代的响应式设计，可以自动适配不同大小的屏�
 
 组件，就是于丰富网站内容的小插件。你可以添加各式各样的组件来满足你网站的需求。同一组件区域可以添加多个组件并且可以对其进行拖拉排序。
 ## 显示模板
-ZKEACMS 的模板组件可以更方便的进行扩展。直接更换显示模板就可以达到您想要的效果。
+纸壳CMS的模板组件可以更方便的进行扩展。直接更换显示模板就可以达到您想要的效果。
 
 ![分组](https://cloud.githubusercontent.com/assets/6006218/23801059/9aae6bdc-05e9-11e7-8540-89c5b58dbc99.jpg)
 
 ![显示模板](https://cloud.githubusercontent.com/assets/6006218/23801091/cd3c03d4-05e9-11e7-8196-5ef107fc4442.jpg)
 
 ## Theme/主题
-ZKEACMS 使用LESS，可以轻松的创建主题。
+纸壳CMS的主题使用了LESS，通过修改变量，就可以轻松的创建主题。
 
 ![主题](https://cloud.githubusercontent.com/assets/6006218/23801129/f5be52ee-05e9-11e7-8a7e-6465a4cb3c9f.jpg)
 
@@ -91,7 +89,6 @@ ZKEACMS 使用LESS，可以轻松的创建主题。
 
 [赞助](http://www.zkea.net/zkeacms/donate)
 
-[DEMO站点](http://core.zkeasoft.com)
 
 ## 关注微信(ZKEASOFT)
 ![关注微信](http://blog.zkea.net/wp-content/uploads/2016/03/263801921375bdf2.jpg)

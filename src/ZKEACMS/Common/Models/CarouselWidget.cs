@@ -17,6 +17,10 @@ namespace ZKEACMS.Common.Models
     [ViewConfigure(typeof(CarouselWidgetMetaData)), Table("CarouselWidget")]
     public class CarouselWidget : BasicWidget
     {
+        public CarouselWidget()
+        {
+            CarouselItems = new List<CarouselItemEntity>();
+        }
         public int? CarouselID { get; set; }
         [NotMapped]
         public IEnumerable<CarouselItemEntity> CarouselItems { get; set; }
@@ -32,7 +36,7 @@ namespace ZKEACMS.Common.Models
                 var result = new Dictionary<string, string> { { "", "---请选择---" } };
                 using (var carouselService = ServiceLocator.GetService<ICarouselService>())
                 {
-                    carouselService.GetAll().Each(m => result.Add(m.ID.ToString(), m.Title));
+                    carouselService.Get().Each(m => result.Add(m.ID.ToString(), m.Title));
                     return result;
                 }
             });

@@ -5,6 +5,8 @@ using Easy.Constant;
 using Easy.Extend;
 using Easy.Models;
 using Easy.Modules.Role;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Mvc.Authorize
 {
@@ -32,6 +34,10 @@ namespace Easy.Mvc.Authorize
 
         public bool Authorize(string permission, IUser user)
         {
+            if (!ApplicationContext.IsAuthenticated)
+            {
+                return false;
+            }
             if (permission.IsNullOrWhiteSpace())
             {
                 return true;

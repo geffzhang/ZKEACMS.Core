@@ -23,6 +23,7 @@ namespace ZKEACMS
     {
         public static void UseZKEACMS(this IServiceCollection serviceCollection)
         {
+            serviceCollection.TryAddScoped<IApplicationContextAccessor, ApplicationContextAccessor>();
             serviceCollection.TryAddScoped<IApplicationContext, CMSApplicationContext>();
             serviceCollection.TryAddSingleton<IRouteProvider, RouteProvider>();
             serviceCollection.TryAddSingleton<IAdminMenuProvider, AdminMenuProvider>();
@@ -53,6 +54,7 @@ namespace ZKEACMS
             serviceCollection.AddTransient<IPackageInstaller, FilePackageInstaller>();
             serviceCollection.AddTransient<IPackageInstaller, DataDictionaryPackageInstaller>();
             serviceCollection.AddTransient<IPackageInstallerProvider, PackageInstallerProvider>();
+            serviceCollection.AddTransient<IEventViewerService, EventViewerService>();
 
             foreach (var item in WidgetBase.KnownWidgetService)
             {

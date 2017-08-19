@@ -1,28 +1,24 @@
 ﻿/*!
  * http://www.zkea.net/
  * Copyright 2017 ZKEASOFT
+ * 深圳市纸壳软件有限公司
  * http://www.zkea.net/licenses
  */
 
 using Easy;
 using Easy.Extend;
-using Easy.Logging;
-using Easy.Mvc.Attribute;
 using Easy.Mvc.Authorize;
 using Easy.Mvc.DataAnnotations;
-using Easy.Mvc.Plugin;
 using Easy.RepositoryPattern;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using System.IO;
 using System.Linq;
 using ZKEACMS.ModelBinder;
 
@@ -33,10 +29,10 @@ namespace ZKEACMS.WebHost
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
+             .SetBasePath(env.ContentRootPath)
+             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+             .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+             .AddEnvironmentVariables();
 
             if (env.IsDevelopment())
             {
@@ -78,6 +74,7 @@ namespace ZKEACMS.WebHost
                  }
              }, null);
             services.UseZKEACMS();
+
             services.Configure<AuthorizationOptions>(options =>
             {
                 PermissionKeys.KnownPermissions.Each(p =>
@@ -87,17 +84,24 @@ namespace ZKEACMS.WebHost
                         configure.Requirements.Add(new RoleRequirement { Policy = p.Key });
                     });
                 });
-
             });
-            services.AddAuthorization();
+            //services.AddAuthorization();
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(o =>
+                {
+                    o.LoginPath = new PathString("/Account/Login");
+                    o.AccessDeniedPath = new PathString("/Error/Forbidden");
+                });
+            
             new ResourceManager().Excute();
         }
-        
+
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            app.UseAuthentication();
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-            ServiceLocator.Current = app.ApplicationServices;
+            ServiceLocator.HttpContextAccessor = app.ApplicationServices.GetService<IHttpContextAccessor>();
 
             if (env.IsDevelopment())
             {
@@ -110,16 +114,6 @@ namespace ZKEACMS.WebHost
                 loggerFactory.UseFileLog(env);
                 app.UseExceptionHandler("/Error");
             }
-
-            app.UseCookieAuthentication(new CookieAuthenticationOptions
-            {
-                AuthenticationScheme = "Cookie",
-                LoginPath = new PathString("/Account/Login"),
-                AccessDeniedPath = new PathString("/Error/Forbidden"),
-                AutomaticAuthenticate = true,
-                AutomaticChallenge = true
-            });
-
 
             app.UseStaticFiles();
 

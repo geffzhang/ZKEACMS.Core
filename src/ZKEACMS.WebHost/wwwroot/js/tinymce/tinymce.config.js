@@ -9,7 +9,7 @@ $.post("/admin/Theme/GetCurrentTheme", function (theme) {
             "searchreplace visualblocks code fullscreen",
             "insertdatetime media table contextmenu paste",
             "filebrowser textcolor hr",
-            "bootstrap"
+            "bootstrap pasteImage"
         ],
         toolbar: "insertfile undo redo | styleselect | bold italic forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | filebrowser",
         height: 300,

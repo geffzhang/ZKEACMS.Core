@@ -1,11 +1,14 @@
 ﻿/*!
  * http://www.zkea.net/
- * Copyright 2016 ZKEASOFT
+ * Copyright 2017 ZKEASOFT
  * http://www.zkea.net/licenses
  */
 
 $(function () {
-
+    var mainBody = document.querySelector("#main-body");
+    if (mainBody) {
+        mainBody.style = "height:" + (window.innerHeight - 80) + "px";
+    }
     $(".accordion-group>a").click(function () {
         if ($(this).nextAll(".accordion-inner").hasClass("active")) {
             return false;
@@ -86,7 +89,7 @@ $(function () {
             width: 1024,
             title: "编辑样式",
             onLoad: function (box) {
-                
+                box.addClass("loaded");
             },
             isDialog: false
         });
@@ -202,8 +205,50 @@ $(function () {
             return null;
         },
         placement: "bottom"
-    });
+    }).parent().addClass("loading");
 
+    if (document.addEventListener) {
+        document.addEventListener("paste", function (e) {
+            if (e.target.className && e.target.className.indexOf("select-image") >= 0) {
+                var target = e.target;
+                var cbData;
+                if (e.clipboardData) {
+                    cbData = e.clipboardData;
+                } else if (window.clipboardData) {
+                    cbData = window.clipboardData;
+                }
+                if (cbData && cbData.items) {
+                    for (var i = 0; i < cbData.items.length; i++) {
+                        if (cbData.items[i].type.indexOf('image') !== -1) {
+                            target.parentNode.className = target.parentNode.className + " processing";
+                            target.value = "图片上传中...";
+                            var file = cbData.items[i].getAsFile();
+                            var xhr = new XMLHttpRequest();
+                            xhr.open("POST", "/admin/media/Upload");
+                            xhr.onload = function (data) {
+                                target.parentNode.className = target.parentNode.className.replace(" processing", "");
+                                var result = JSON.parse(data.target.response);
+                                if (result.id) {
+                                    target.value = "~" + result.url;
+                                    $(target).blur().focus();
+                                }
+                            }
+                            xhr.onerror = function () {
+                                target.parentNode.className = target.parentNode.className.replace(" processing", "");
+                                target.value = "图片上传失败";
+                            }
+                            var formData = new FormData();
+                            formData.append('file', file);
+                            formData.append("folder", "图片");
+                            xhr.send(formData);
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+  
     $(".input-group .glyphicon.glyphicon-play").popover({
         trigger: "click",
         html: true,
