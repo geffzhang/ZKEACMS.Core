@@ -1,0 +1,25 @@
+﻿@model ZKEACMS.EventAction.Models.PendingTaskEntity
+@{
+    Script.Reqiured("validate").AtFoot();
+    Script.Reqiured("tinymce").AtFoot();
+}
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        @L("New")
+    </div>
+    <div class="panel-body">
+        @using (Html.BeginForm())
+        {
+            @Html.EditorForModel()
+            <div class="toolBar">
+                @if (Authorizer.Authorize(ZKEACMS.EventAction.PermissionKeys.ManageEventNotification))
+                {
+                    <input type="submit" class="btn btn-primary" value="@L("Save")" data-value="@ActionType.Create" />
+                    <input type="submit" class="btn btn-primary" value="@L("Save And Exit")" data-value="@ActionType.CreateAndExit" />
+                }
+                <a class="btn btn-default" href="@Url.Action("Index")">@L("Cancel")</a>
+            </div>
+        }
+    </div>
+</div>

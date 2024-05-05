@@ -1,10 +1,14 @@
 /* http://www.zkea.net/ 
- * Copyright 2017 ZKEASOFT 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
  * http://www.zkea.net/licenses */
 
 using ZKEACMS.Page;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http;
+using System;
+using Microsoft.Net.Http.Headers;
+using ZKEACMS.Theme;
 
 namespace ZKEACMS.Filter
 {
@@ -12,18 +16,26 @@ namespace ZKEACMS.Filter
     {
         public override PageEntity GetPage(ActionExecutedContext filterContext)
         {
-            string pageId = filterContext.RouteData.Values["id"].ToString();
+            filterContext.HttpContext.Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue()
+            {
+                NoCache = true,
+                NoStore = true
+            };
+            var pageId = filterContext.RouteData.Values["id"];
+            if (pageId == null)
+            {
+                return null;
+            }
 
             using (var pageService = filterContext.HttpContext.RequestServices.GetService<IPageService>())
             {
-                return pageService.Get(pageId);
+                return pageService.Get(pageId.ToString());
             }
-            
         }
 
-        public override string GetLayout()
+        public override string GetLayout(ActionExecutedContext filterContext, ThemeEntity theme)
         {
-            return "~/Views/Shared/_DesignPageLayout.cshtml";
+            return Layouts.PageDesign;
         }
         public override PageViewMode GetPageViewMode()
         {

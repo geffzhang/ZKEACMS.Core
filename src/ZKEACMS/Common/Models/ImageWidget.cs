@@ -1,17 +1,24 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy.MetaData;
 using ZKEACMS;
 using ZKEACMS.MetaData;
 using ZKEACMS.Widget;
 using System.ComponentModel.DataAnnotations.Schema;
+using ZKEACMS.Extend;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.Common.Models
 {
-    [ViewConfigure(typeof(ImageWidgetMedaData)),Table("ImageWidget")]
+    [DataTable("ImageWidget")]
     public class ImageWidget : BasicWidget
     {
         public string ImageUrl { get; set; }
+        public string ImageUrlMd { get; set; }
+        public string ImageUrlSm { get; set; }
         public int? Width { get; set; }
         public int? Height { get; set; }
         public string Link { get; set; }
@@ -22,7 +29,10 @@ namespace ZKEACMS.Common.Models
         protected override void ViewConfigure()
         {
             base.ViewConfigure();
-            ViewConfig(m => m.ImageUrl).AsTextBox().Required().Order(NextOrder()).AddClass(StringKeys.SelectImageClass).AddProperty("data-url", Urls.SelectMedia); 
+            ViewConfig(m => m.Title).AsHidden();
+            ViewConfig(m => m.ImageUrl).AsTextBox().Required().Order(NextOrder()).MediaSelector();
+            ViewConfig(m => m.ImageUrlMd).AsTextBox().Order(NextOrder()).MediaSelector();
+            ViewConfig(m => m.ImageUrlSm).AsTextBox().Order(NextOrder()).MediaSelector();
         }
     }
 }

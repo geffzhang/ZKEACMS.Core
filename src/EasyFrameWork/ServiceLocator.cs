@@ -1,28 +1,63 @@
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
+using Easy.MetaData;
+using System.Linq;
 
 namespace Easy
 {
     public static class ServiceLocator
     {
-        public static IHttpContextAccessor HttpContextAccessor;
+        private static IHttpContextAccessor HttpContextAccessor;
+        private static IServiceProvider AppScopedServiceProvider;
+        private static Type MetaDataType = typeof(ViewMetaData<>);
+        public static void Setup(IServiceProvider serviceProvider)
+        {
+            HttpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
+            AppScopedServiceProvider = serviceProvider;
+        }
+        private static IServiceProvider GetServiceProvider()
+        {
+            if (HttpContextAccessor == null || HttpContextAccessor.HttpContext == null) return AppScopedServiceProvider;
+
+            return HttpContextAccessor.HttpContext.RequestServices;
+        }
         public static T GetService<T>()
         {
-            return HttpContextAccessor.HttpContext.RequestServices.GetService<T>();
+            return GetServiceProvider().GetService<T>();
         }
         public static IEnumerable<T> GetServices<T>()
         {
-            return HttpContextAccessor.HttpContext.RequestServices.GetServices<T>();
+            return GetServiceProvider().GetServices<T>();
         }
         public static object GetService(Type type)
         {
-            return HttpContextAccessor.HttpContext.RequestServices.GetService(type);
+            return GetServiceProvider().GetService(type);
         }
         public static IEnumerable<object> GetServices(Type type)
         {
-            return HttpContextAccessor.HttpContext.RequestServices.GetServices(type);
+            return GetServiceProvider().GetServices(type);
+        }
+        public static ViewConfigure GetViewConfigure(Type type)
+        {
+            if (type != null && HttpContextAccessor != null)
+            {
+                if (typeof(Microsoft.AspNetCore.Mvc.ControllerBase).IsAssignableFrom(type))
+                {
+                    return null;
+                }
+                var metaData = GetServiceProvider().GetService(MetaDataType.MakeGenericType(type)) as IViewMetaData;
+                if (metaData != null)
+                {
+                    return new ViewConfigure(metaData);
+                }
+            }
+            return null;
         }
     }
 }

@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Routing;
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Microsoft.AspNetCore.Routing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using ZKEACMS.Redirection.Service;
 using Microsoft.Extensions.DependencyInjection;
+using ZKEACMS.Redirection.Models;
 
 namespace ZKEACMS.Redirection
 {
@@ -13,9 +18,20 @@ namespace ZKEACMS.Redirection
     {
         public bool Match(HttpContext httpContext, IRouter route, string routeKey, RouteValueDictionary values, RouteDirection routeDirection)
         {
-            string path = $"~/{(values["path"] ?? "").ToString()}";
-            var redirect = httpContext.RequestServices.GetService<IUrlRedirectService>().Get(m => m.Status == (int)Easy.Constant.RecordStatus.Active && m.InComingUrl == path);
-            return redirect.Count() == 1 && redirect.First().InComingUrl != redirect.First().DestinationURL;
+            if (routeDirection == RouteDirection.UrlGeneration) return false;
+
+            string path = $"~/{values[routeKey]}";
+            if (path.Length > 2 && path.EndsWith('/'))
+            {
+                path = path.TrimEnd('/');
+            }
+            if (path.IndexOf(".html", StringComparison.OrdinalIgnoreCase) < 0 && CustomRegex.PostId().IsMatch(path))
+            {
+                return true;
+            }
+            UrlRedirect redirect = httpContext.RequestServices.GetService<IUrlRedirectService>().GetMatchedRedirection(path);
+
+            return redirect != null;
         }
     }
 }

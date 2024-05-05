@@ -1,69 +1,82 @@
-﻿using Easy;
+﻿/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Easy;
 using Easy.Extend;
-using Easy.RepositoryPattern;
+using Easy.Mvc.Plugin;
+using Easy.Mvc.Resource;
+using Easy.StartTask;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using ZKEACMS.Common.Service;
-using ZKEACMS.Dashboard;
-using ZKEACMS.DataArchived;
-using ZKEACMS.ExtendField;
-using ZKEACMS.Layout;
-using ZKEACMS.Media;
-using ZKEACMS.Page;
-using ZKEACMS.Setting;
-using ZKEACMS.Theme;
-using ZKEACMS.Widget;
-using ZKEACMS.WidgetTemplate;
-using ZKEACMS.Zone;
-using ZKEACMS.PackageManger;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Linq;
+using ZKEACMS.Captcha;
+using ZKEACMS.Route;
 
 namespace ZKEACMS
 {
     public static class Builder
     {
-        public static void UseZKEACMS(this IServiceCollection serviceCollection)
+        public static void UseZKEACMS(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
         {
-            serviceCollection.TryAddScoped<IApplicationContextAccessor, ApplicationContextAccessor>();
-            serviceCollection.TryAddScoped<IApplicationContext, CMSApplicationContext>();
-            serviceCollection.TryAddSingleton<IRouteProvider, RouteProvider>();
-            serviceCollection.TryAddSingleton<IAdminMenuProvider, AdminMenuProvider>();
+            IMvcBuilder mvcBuilder = services.ConfigMVC();
 
-            serviceCollection.TryAddTransient<IWidgetActivator, DefaultWidgetActivator>();
+            services.AddRouteDataProvider();
+            services.ConfigCMS(configuration);
+            services.ConfigMetaData();
+            services.ConfigEvents();
+            services.ConfigCaptcha();
+            services.ConfigDatabase(configuration);
+            services.UseEasyFrameWork(configuration);
+            services.ConfigPlugin(webHostEnvironment, mvcBuilder);
+            services.ConfigAuthentication();
+        }
 
-            serviceCollection.TryAddTransient<ICarouselItemService, CarouselItemService>();
-            serviceCollection.TryAddTransient<ICarouselService, CarouselService>();
-            serviceCollection.TryAddTransient<INavigationService, NavigationService>();
-            serviceCollection.TryAddTransient<IDashboardProviderService, DashboardProviderService>();
-            serviceCollection.TryAddTransient<IDashboardPartDriveService, DashboardWelcomePartService>();
-            serviceCollection.TryAddTransient<IDataArchivedService, DataArchivedService>();
-            serviceCollection.TryAddTransient<IExtendFieldService, ExtendFieldService>();
-
-            serviceCollection.TryAddTransient<ILayoutService, LayoutService>();
-            serviceCollection.TryAddTransient<ILayoutHtmlService, LayoutHtmlService>();
-            serviceCollection.TryAddTransient<IMediaService, MediaService>();
-            serviceCollection.TryAddTransient<IPageService, PageService>();
-            serviceCollection.TryAddTransient<IApplicationSettingService, ApplicationSettingService>();
-            serviceCollection.TryAddTransient<IThemeService, ThemeService>();
-            serviceCollection.TryAddTransient<IWidgetTemplateService, WidgetTemplateService>();
-            serviceCollection.TryAddTransient<IWidgetBasePartService, WidgetBasePartService>();
-            serviceCollection.TryAddTransient<IZoneService, ZoneService>();
-            serviceCollection.AddTransient<IOnModelCreating, EntityFrameWorkModelCreating>();
-
-            serviceCollection.AddTransient<IPackageInstaller, ThemePackageInstaller>();
-            serviceCollection.AddTransient<IPackageInstaller, WidgetPackageInstaller>();
-            serviceCollection.AddTransient<IPackageInstaller, FilePackageInstaller>();
-            serviceCollection.AddTransient<IPackageInstaller, DataDictionaryPackageInstaller>();
-            serviceCollection.AddTransient<IPackageInstallerProvider, PackageInstallerProvider>();
-            serviceCollection.AddTransient<IEventViewerService, EventViewerService>();
-
-            foreach (var item in WidgetBase.KnownWidgetService)
+        public static void UseZKEACMS(this IApplicationBuilder applicationBuilder, IWebHostEnvironment hostingEnvironment, IServiceProvider serviceProvider)
+        {
+            if (hostingEnvironment.IsDevelopment())
             {
-                serviceCollection.TryAddTransient(item.Value);
+                applicationBuilder.UsePluginStaticFile();
             }
-            foreach (var item in WidgetBase.KnownWidgetModel)
+            applicationBuilder.UseStaticFiles();
+            ServiceLocator.Setup(serviceProvider);
+            applicationBuilder.ConfigureResource();
+            applicationBuilder.ConfigurePlugin(hostingEnvironment);
+            applicationBuilder.UseSession();
+            applicationBuilder.UseRouting();
+
+            applicationBuilder.UseAuthentication();
+            applicationBuilder.UseAuthorization();
+
+            applicationBuilder.UseEndpoints(endpoints =>
             {
-                serviceCollection.TryAddTransient(item.Value);
+                applicationBuilder.ApplicationServices.GetService<IRouteProvider>().GetRoutes().OrderByDescending(route => route.Priority).Each(route =>
+                {
+                    endpoints.MapControllerRoute(
+                        name: route.RouteName,
+                        pattern: route.Template,
+                        defaults: route.Defaults,
+                        constraints: route.Constraints,
+                        dataTokens: route.DataTokens);
+                });
+
+                endpoints.MapRazorPages();
+            });
+            using (var scope = applicationBuilder.ApplicationServices.CreateScope())
+            {
+                foreach (IStartTask task in scope.ServiceProvider.GetServices<IStartTask>())
+                {
+                    task.Excute();
+                }
             }
+
+            System.IO.Directory.SetCurrentDirectory(hostingEnvironment.ContentRootPath);
+            Console.WriteLine("Welcome to use ZKEACMS");
         }
     }
 }

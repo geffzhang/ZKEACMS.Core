@@ -1,20 +1,19 @@
 /* http://www.zkea.net/ 
- * Copyright 2017 ZKEASOFT 
- * http://www.zkea.net/licenses 
- *
- * 这是一个标准的项目文件，如果要建一个新的插件，请复制这个项目文件，然后重命名
- * 1. AssemblyInfo.cs 修改 AssemblyProduct，Guid
- * 2. StandardPlug.cs 修改名称和类名
- * 3. zkea.plugin 修改 ID 的值为新的GUID，并对应修改里面的名称。
- */
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Easy;
+using Easy.Extend;
 using Easy.Mvc.Resource;
 using Easy.Mvc.Route;
-using System;
-using System.Collections.Generic;
+using Easy.RepositoryPattern;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Easy.RepositoryPattern;
+using System;
+using System.Collections.Generic;
+using ZKEACMS.Redirection.Models;
 using ZKEACMS.Redirection.Service;
+using ZKEACMS.WidgetTemplate;
 
 namespace ZKEACMS.Redirection
 {
@@ -28,7 +27,7 @@ namespace ZKEACMS.Redirection
                 Template = "{*path}",
                 Defaults = new { controller = "UrlRedirection", action = "RedirectTo" },
                 Constraints = new { path = new RedirectRouteConstraint() },
-                Priority = 0
+                Priority = int.MaxValue
             };
         }
 
@@ -36,8 +35,9 @@ namespace ZKEACMS.Redirection
         {
             yield return new AdminMenu
             {
-                Title = "URL重定向",
-                Url = "~/Admin/UrlRedirection",
+                Group = "System",
+                Title = "Url Redirect",
+                Url = "~/admin/urlredirection",
                 Icon = "glyphicon-random",
                 Order = 12,
                 PermissionKey = PermissionKeys.ViewUrlRedirect
@@ -58,28 +58,32 @@ namespace ZKEACMS.Redirection
         {
             yield return new PermissionDescriptor
             {
-                Module = "URL重定向",
-                Title = "查看重定向",
-                Description = "查看重定向",
+                Module = "Setting",
+                Title = "View URL Redirection",
+                Description = "View URL Redirection",
                 Key = PermissionKeys.ViewUrlRedirect
             };
             yield return new PermissionDescriptor
             {
-                Module = "URL重定向",
-                Title = "管理重定向",
-                Description = "管理重定向",
+                Module = "Setting",
+                Title = "Manage URL Redirection",
+                Description = "Manage URL Redirection",
                 Key = PermissionKeys.ManageUrlRedirect
             };
         }
 
-        public override IEnumerable<Type> WidgetServiceTypes()
+        public override IEnumerable<WidgetTemplateEntity> WidgetServiceTypes()
         {
             return null;
         }
 
         public override void ConfigureServices(IServiceCollection serviceCollection)
         {
+            serviceCollection.AddSingleton<IOnModelCreating, EntityFrameWorkModelCreating>();
+
             serviceCollection.TryAddTransient<IUrlRedirectService, UrlRedirectService>();
+
+            serviceCollection.ConfigureMetaData<UrlRedirect, UrlRedirectMetaData>();
         }
     }
 }

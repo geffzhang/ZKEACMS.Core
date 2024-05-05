@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -19,78 +22,79 @@ namespace Easy.MetaData
     {
         public ViewMetaData()
         {
-            Init();
-        }
-        public void Init()
-        {
-            ViewPortDescriptors = new Dictionary<string, BaseDescriptor>();          
-            
+            ViewPortDescriptors = new Dictionary<string, BaseDescriptor>();
+
             TargetType = typeof(T);
             foreach (var item in TargetType.GetProperties())
             {
-                TypeCode code = Type.GetTypeCode(item.PropertyType.GetTypeInfo().IsGenericType ? item.PropertyType.GetGenericArguments()[0] : item.PropertyType);
+                Type propertyType= Nullable.GetUnderlyingType(item.PropertyType) ?? item.PropertyType;                
+                TypeCode code = Type.GetTypeCode(propertyType);
                 switch (code)
                 {
                     case TypeCode.Boolean:
                         ViewConfig(item.Name).AsCheckBox();
                         break;
+
                     case TypeCode.Char:
-                        ViewConfig(item.Name).AsTextBox().MaxLength(1).RegularExpression(RegularExpression.Letters).Search(LINQ.Query.Operators.Contains);
+                        ViewConfig(item.Name).AsTextBox().MaxLength(1).RegularExpression(RegularExpression.Letters);
                         break;
+
                     case TypeCode.DateTime:
-                        ViewConfig(item.Name).AsTextBox().FormatAsDate().Search(LINQ.Query.Operators.Range);
+                        ViewConfig(item.Name).AsTextBox().FormatAsDate();
                         break;
+                        
+                    case TypeCode.Byte:
                     case TypeCode.UInt16:
                     case TypeCode.UInt32:
                     case TypeCode.UInt64:
-                        ViewConfig(item.Name).AsTextBox().RegularExpression(RegularExpression.PositiveIntegersAndZero).Search(LINQ.Query.Operators.Range);
+                        ViewConfig(item.Name).AsTextBox().RegularExpression(RegularExpression.PositiveIntegersAndZero);
                         break;
+
                     case TypeCode.SByte:
                     case TypeCode.Int16:
                     case TypeCode.Int32:
                     case TypeCode.Int64:
-                        ViewConfig(item.Name).AsTextBox().RegularExpression(RegularExpression.Integer).Search(LINQ.Query.Operators.Range);
+                        ViewConfig(item.Name).AsTextBox().RegularExpression(RegularExpression.Integer);
                         break;
-                    case TypeCode.Object:
-                        ViewConfig(item.Name).AsHidden().Ignore();
-                        break;
+
                     case TypeCode.Single:
                     case TypeCode.Double:
                     case TypeCode.Decimal:
-                        ViewConfig(item.Name).AsTextBox().RegularExpression(RegularExpression.Float).Search(LINQ.Query.Operators.Range);
-                        break;
-                    case TypeCode.String:
-                        ViewConfig(item.Name).AsTextBox().MaxLength(200).Search(LINQ.Query.Operators.Contains);
+                        ViewConfig(item.Name).AsTextBox().RegularExpression(RegularExpression.Float);
                         break;
                         
-                    case TypeCode.Byte:
                     case TypeCode.Empty:
-                    default: ViewConfig(item.Name).AsTextBox();
+                    case TypeCode.String:
+                        ViewConfig(item.Name).AsTextBox().MaxLength(200);
+                        break;
+                        
+                    case TypeCode.Object:
+                    default:
+                        ViewConfig(item.Name).AsObject();
                         break;
                 }
-                
+
             }
             if (typeof(EditorEntity).IsAssignableFrom(TargetType))
             {
                 ViewConfig("CreateBy").AsHidden();
-                ViewConfig("CreatebyName").AsTextBox().Hide().ShowInGrid();
+                ViewConfig("CreatebyName").AsTextBox().Hide().ShowInGrid().Search(LINQ.Query.Operators.None);
                 ViewConfig("CreateDate").AsTextBox().Hide().FormatAsDateTime().ShowInGrid().Search(LINQ.Query.Operators.Range);
 
                 ViewConfig("LastUpdateBy").AsHidden();
-                ViewConfig("LastUpdateByName").AsTextBox().Hide().ShowInGrid();
+                ViewConfig("LastUpdateByName").AsTextBox().Hide().ShowInGrid().Search(LINQ.Query.Operators.None);
                 ViewConfig("LastUpdateDate").AsTextBox().Hide().FormatAsDateTime().ShowInGrid().Search(LINQ.Query.Operators.Range);
                 ViewConfig("ActionType").AsHidden().AddClass("ActionType");
                 ViewConfig("Title").AsTextBox().Order(1).ShowInGrid().Search(LINQ.Query.Operators.Contains).MaxLength(200);
                 ViewConfig("Description").AsTextArea().Order(101).MaxLength(500);
                 ViewConfig("Status").AsDropDownList().DataSource(DicKeys.RecordStatus, SourceType.Dictionary).ShowInGrid();
-              
             }
             if (typeof(IImage).IsAssignableFrom(TargetType))
             {
                 ViewConfig("ImageUrl").AsTextBox();
                 ViewConfig("ImageThumbUrl").AsTextBox();
             }
-            
+
             ViewConfigure();
         }
 

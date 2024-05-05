@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,24 +13,35 @@ namespace ZKEACMS.Controllers
         public ErrorController()
         {
         }
-        public ActionResult Index()
+        public IActionResult Index(int? code)
         {
-            Response.StatusCode = 500;
-            return View();
+            var result = View("Index");
+            result.StatusCode = code ?? 500;
+            return result;
         }
 
-        public ActionResult NotFond()
+        public IActionResult NotFond()
         {
-            Response.StatusCode = 404;
-            //Response.TrySkipIisCustomErrors = true;
-            return View();
+            var result = View("NotFound");
+            result.StatusCode = 404;
+            return result;
         }
 
-        public ActionResult Forbidden()
+        public IActionResult Forbidden()
         {
-            Response.StatusCode = 403;
-            //Response.TrySkipIisCustomErrors = true;
-            return View();
+            var result = View("Forbidden");
+            result.StatusCode = 403;
+            return result;
+        }
+        public IActionResult Code(int code)
+        {
+            switch (code)
+            {
+                case 404: return NotFond();
+                case 403: return Forbidden();
+                case 401: return Unauthorized();
+                default: return Index(code);
+            }
         }
     }
 }

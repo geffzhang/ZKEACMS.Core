@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +13,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 using Easy;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.SectionWidget.Models
 {
-    [ViewConfigure(typeof(SectionGroupMetaData)), Table("SectionGroup")]
+    [DataTable("SectionGroup")]
     public class SectionGroup : EditorEntity
     {
         [Key]
@@ -111,6 +115,24 @@ namespace ZKEACMS.SectionWidget.Models
         }
 
         [NotMapped]
+        public SectionContentVideo Video
+        {
+            get
+            {
+                return GetContent<SectionContentVideo>(SectionContentBase.Types.Video);
+            }
+        }
+
+        [NotMapped]
+        public IEnumerable<SectionContentVideo> Videos
+        {
+            get
+            {
+                return GetContents<SectionContentVideo>(SectionContentBase.Types.Video);
+            }
+        }
+
+        [NotMapped]
         public override string Description { get; set; }
         [NotMapped]
         public override int? Status { get; set; }
@@ -136,6 +158,18 @@ namespace ZKEACMS.SectionWidget.Models
             });
             ViewConfig(m => m.Title).AsHidden();
             ViewConfig(m => m.Description).AsHidden();
+
+            ViewConfig(m => m.SectionContents).AsHidden().Ignore();
+            ViewConfig(m => m.SectionTitle).AsHidden().Ignore();
+            ViewConfig(m => m.SectionTitles).AsHidden().Ignore();
+            ViewConfig(m => m.CallToAction).AsHidden().Ignore();
+            ViewConfig(m => m.CallToActions).AsHidden().Ignore();
+            ViewConfig(m => m.SectionImage).AsHidden().Ignore();
+            ViewConfig(m => m.SectionImages).AsHidden().Ignore();
+            ViewConfig(m => m.Paragraph).AsHidden().Ignore();
+            ViewConfig(m => m.Paragraphs).AsHidden().Ignore();
+            ViewConfig(m => m.Video).AsHidden().Ignore();
+            ViewConfig(m => m.Videos).AsHidden().Ignore();
         }
     }
 }

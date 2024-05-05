@@ -1,8 +1,12 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
-using Easy.Zip;
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
+using ZKEACMS.Page;
 
 namespace ZKEACMS.Widget
 {
@@ -13,7 +17,7 @@ namespace ZKEACMS.Widget
         void UpdateWidget(WidgetBase widget);
         void Publish(WidgetBase widget);
         WidgetBase GetWidget(WidgetBase widget);
-        WidgetViewModelPart Display(WidgetBase widget, ActionContext actionContext);
+        object Display(WidgetDisplayContext widgetDisplayContext);
         WidgetPackage PackWidget(WidgetBase widget);
         void InstallWidget(WidgetPackage pack);
     }

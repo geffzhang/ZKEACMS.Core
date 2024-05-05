@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using Easy.Constant;
@@ -8,12 +11,18 @@ using Easy.Models;
 using ZKEACMS.ExtendField;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.Page
 {
-    [ViewConfigure(typeof(PageBaseMetaData)), Table("CMS_Page")]
+    [DataTable("CMS_Page")]
     public class PageEntity : EditorEntity
     {
+        public PageEntity()
+        {
+            Styles = new List<PageAsset>();
+            Scripts = new List<PageAsset>();
+        }
         [Key]
         public string ID { get; set; }
         public string ReferencePageID { get; set; }
@@ -49,18 +58,40 @@ namespace ZKEACMS.Page
         public bool IsPublish { get; set; }
         [NotMapped]
         public string Favicon { get; set; }
+        [NotMapped]
+        public List<PageAsset> Styles { get; set; }
+        [NotMapped]
+        public List<PageAsset> Scripts { get; set; }
+        public void ConfigSEO(string title,string keywords,string description)
+        {
+            if (title.IsNotNullAndWhiteSpace())
+            {
+                Title = title;
+            }
+            if (keywords.IsNotNullAndWhiteSpace())
+            {
+                MetaKeyWorlds = keywords;
+            }
+            if (description.IsNotNullAndWhiteSpace())
+            {
+                MetaDescription = description;
+            }
+        }
     }
-    class PageBaseMetaData : ViewMetaData<PageEntity>
+    class PageMetaData : ViewMetaData<PageEntity>
     {
 
         protected override void ViewConfigure()
         {
             ViewConfig(m => m.PageName).AsTextBox().Order(1).Required();
-            ViewConfig(m => m.PageUrl).AsTextBox().Order(2).Required();
-            ViewConfig(m => m.Url).AsTextBox().ReadOnly();
-            ViewConfig(m => m.LayoutId).AsDropDownList().DataSource(ViewDataKeys.Layouts, SourceType.ViewData);
-            ViewConfig(m => m.Script).AsTextBox().AddClass(StringKeys.SelectMediaClass).AddProperty("data-url", Urls.SelectMedia);
-            ViewConfig(m => m.Style).AsTextBox().AddClass(StringKeys.SelectMediaClass).AddProperty("data-url", Urls.SelectMedia);
+            ViewConfig(m => m.PageUrl).AsTextBox().Order(2).Required().SetTemplate("PageUrl").RegularExpression(RegularExpression.LetterNumberOrLine);
+            ViewConfig(m => m.Url).AsHidden();
+            //ViewConfig(m => m.LayoutId).AsDropDownList().DataSource(ViewDataKeys.Layouts, SourceType.ViewData);
+            ViewConfig(m => m.LayoutId).AsTextBox().SetTemplate("LayoutChooser");
+            ViewConfig(m => m.Script).AsHidden();
+            ViewConfig(m => m.Style).AsHidden();
+            ViewConfig(m => m.Scripts).AsListEditor().Sortable();
+            ViewConfig(m => m.Styles).AsListEditor().Sortable();
             
             ViewConfig(m => m.ParentId).AsHidden();
             ViewConfig(m => m.ID).AsHidden();

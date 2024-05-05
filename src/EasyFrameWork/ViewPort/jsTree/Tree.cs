@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +11,7 @@ using Easy.Extend;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Easy.Serializer;
 
 namespace Easy.ViewPort.jsTree
 {
@@ -19,6 +23,7 @@ namespace Easy.ViewPort.jsTree
         Func<T, string> valueProperty;
         Func<T, string> parentProperty;
         Func<T, string> textProperty;
+        bool _expandAll;
         Dictionary<string, string> _events = new Dictionary<string, string>();
         List<string> _plugins = new List<string>();
         Contextmenu contextMenu = new Contextmenu();
@@ -87,19 +92,19 @@ namespace Easy.ViewPort.jsTree
             }
             return this;
         }
-        public Tree<T> Id(Expression<Func<T, string>> value)
+        public Tree<T> Id(Func<T, string> value)
         {
-            valueProperty = value.Compile();
+            valueProperty = value;
             return this;
         }
-        public Tree<T> Text(Expression<Func<T, string>> text)
+        public Tree<T> Text(Func<T, string> text)
         {
-            textProperty = text.Compile();
+            textProperty = text;
             return this;
         }
-        public Tree<T> Parent(Expression<Func<T, string>> parent)
+        public Tree<T> Parent(Func<T, string> parent)
         {
-            parentProperty = parent.Compile();
+            parentProperty = parent;
             return this;
         }
 
@@ -130,16 +135,20 @@ namespace Easy.ViewPort.jsTree
             _check_callback = fun;
             return this;
         }
-        public List<Node> ToNode(Expression<Func<T, string>> value, Expression<Func<T, string>> text, Expression<Func<T, string>> parent, string rootId)
+        public List<Node> ToNode(Func<T, string> value, Func<T, string> text, Func<T, string> parent, string rootId)
         {
-            valueProperty = value.Compile();
-            parentProperty = parent.Compile();
-            textProperty = text.Compile();
+            return ToNode(value, text, parent, rootId, true);
+        }
+        public List<Node> ToNode(Func<T, string> value, Func<T, string> text, Func<T, string> parent, string rootId, bool expandAll)
+        {
+            valueProperty = value;
+            parentProperty = parent;
+            textProperty = text;
             _rootId = rootId;
+            _expandAll = expandAll;
             InitDode();
             return nodes;
         }
-
         public override string ToString()
         {
             InitDode();
@@ -149,15 +158,15 @@ namespace Easy.ViewPort.jsTree
             {
                 builder.AppendFormat(".on('{0}',{1})", item.Key, item.Value);
             }
-            string source = "{'url' : '" + _sourceUrl + "','data' : function (node) {return { 'id' : node.id };}}";
+            string source = "{'url' : '" + _sourceUrl + "','data' : function (node) {return { 'id' : node.id, 't': new Date().getTime() };}}";
             if (nodes != null && nodes.Count > 0)
             {
-                source = Newtonsoft.Json.JsonConvert.SerializeObject(nodes);
+                source = JsonConverter.Serialize(nodes);
             }
             builder.AppendFormat(".jstree({{'core':{{data:{0},'check_callback':{1}}}", source, _check_callback.IsNullOrEmpty() ? "false" : _check_callback);
             if (_plugins.Count > 0)
             {
-                builder.AppendFormat(",'plugins':{0}", Newtonsoft.Json.JsonConvert.SerializeObject(_plugins));
+                builder.AppendFormat(",'plugins':{0}", JsonConverter.Serialize(_plugins));
             }
             if (contextMenu.Count > 0)
             {
@@ -177,7 +186,7 @@ namespace Easy.ViewPort.jsTree
                 _viewContext.Writer.Write(builder.ToString());
                 return string.Empty;
             }
-            return builder.ToString();            
+            return builder.ToString();
         }
         private void InitDode()
         {
@@ -196,8 +205,8 @@ namespace Easy.ViewPort.jsTree
         {
             Node node = new Node();
             node.id = valueProperty(data);
-            node.text = textProperty(data);
-            node.state = new State { opened = true };
+            node.text = System.Net.WebUtility.HtmlEncode(textProperty(data));
+            node.state = new State { opened = _expandAll };
             node.a_attr = data;
             node.children = new List<Node>();
             DataSource.Where(m => parentProperty(m) == node.id).Each(m => node.children.Add(InitNode(m)));

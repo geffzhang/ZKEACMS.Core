@@ -1,12 +1,16 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy.MetaData;
 using System.ComponentModel.DataAnnotations.Schema;
 using ZKEACMS.Extend;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.SectionWidget.Models
 {
-    [ViewConfigure(typeof(SectionContentImageMetaData)), Table("SectionContentImage")]
+    [DataTable("SectionContentImage")]
     public class SectionContentImage : SectionContentBasic
     {
         public string ImageSrc { get; set; }
@@ -15,6 +19,7 @@ namespace ZKEACMS.SectionWidget.Models
         public string Href { get; set; }
         public int? Width { get; set; }
         public int? Height { get; set; }
+        [NotMapped]
         public override int SectionContentType
         {
             get

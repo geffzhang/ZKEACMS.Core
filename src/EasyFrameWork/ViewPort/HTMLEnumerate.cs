@@ -1,4 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 namespace Easy.ViewPort
 {
@@ -8,13 +10,14 @@ namespace Easy.ViewPort
         {
             Input = 1,
             DropDownList = 2,
-            MutiSelect = 3,
+            MultiSelect = 3,
             File = 4,
             PassWord = 5,
             Hidden = 6,
             CheckBox = 7,
             MutiLineTextBox = 8,
-            ListEditor=9
+            ListEditor = 9,
+            Object = 10
         }
     }
 }

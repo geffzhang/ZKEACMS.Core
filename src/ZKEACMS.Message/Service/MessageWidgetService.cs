@@ -1,4 +1,8 @@
-﻿using Easy;
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Easy;
 using Microsoft.AspNetCore.Mvc;
 using ZKEACMS.Message.Models;
 using ZKEACMS.Widget;
@@ -7,13 +11,18 @@ namespace ZKEACMS.Message.Service
 {
     public class MessageWidgetService : SimpleWidgetService<MessageWidget>
     {
-        public MessageWidgetService(IWidgetBasePartService widgetBasePartService, IApplicationContext applicationContext) 
-            : base(widgetBasePartService, applicationContext)
+        public MessageWidgetService(IWidgetBasePartService widgetBasePartService, IApplicationContext applicationContext, CMSDbContext dbContext)
+            : base(widgetBasePartService, applicationContext, dbContext)
         {
         }
-        public override WidgetViewModelPart Display(WidgetBase widget, ActionContext actionContext)
+        public override object Display(WidgetDisplayContext widgetDisplayContext)
         {
-            return widget.ToWidgetViewModelPart(new MessageEntity());
+            if (widgetDisplayContext.FormModel is MessageEntity messageEntity)
+            {
+                return messageEntity;
+            }
+
+            return new MessageEntity();
         }
     }
 }

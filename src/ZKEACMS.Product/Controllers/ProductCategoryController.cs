@@ -1,5 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
-
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 using Easy.Mvc.Authorize;
 using Easy.Mvc.Controllers;
@@ -7,7 +8,7 @@ using Easy.ViewPort.jsTree;
 using Microsoft.AspNetCore.Mvc;
 using ZKEACMS.Product.Models;
 using ZKEACMS.Product.Service;
-using Easy.Extend;
+using System.Linq;
 
 namespace ZKEACMS.Product.Controllers
 {
@@ -19,12 +20,12 @@ namespace ZKEACMS.Product.Controllers
         {
         }
         [DefaultAuthorize(Policy = PermissionKeys.ViewProductCategory)]
-        public override ActionResult Index()
+        public override IActionResult Index()
         {
             return base.Index();
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageProductCategory)]
-        public override ActionResult Create()
+        public override IActionResult Create()
         {
 
             var parentId = Request.Query["ParentID"];
@@ -40,35 +41,35 @@ namespace ZKEACMS.Product.Controllers
             return View(productCategory);
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageProductCategory)]
-        public override ActionResult Create(ProductCategory entity)
+        public override IActionResult Create(ProductCategory entity)
         {
             return base.Create(entity);
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageProductCategory)]
-        public override ActionResult Edit(int Id)
+        public override IActionResult Edit(int Id)
         {
             return base.Edit(Id);
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageProductCategory)]
-        public override ActionResult Edit(ProductCategory entity)
+        public override IActionResult Edit(ProductCategory entity)
         {
             return base.Edit(entity);
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageProductCategory)]
-        public override JsonResult Delete(int id)
+        public override IActionResult Delete(int id)
         {
             return base.Delete(id);
         }
         [DefaultAuthorize(Policy = PermissionKeys.ViewProductCategory)]
         public JsonResult GetProductCategoryTree()
         {
-            var pages = Service.Get();
+            var pages = Service.Get().ToList();
             var node = new Tree<ProductCategory>().Source(pages).ToNode(m => m.ID.ToString(), m => m.Title, m => m.ParentID.ToString(), "0");
             return Json(node);
         }
 
         [DefaultAuthorize(Policy = PermissionKeys.ViewProductCategory)]
-        public ActionResult Select(int? selected)
+        public IActionResult Select(int? selected)
         {
             ViewBag.Selected = selected;
             return View();

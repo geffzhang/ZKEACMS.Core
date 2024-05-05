@@ -1,13 +1,33 @@
-﻿@{
-    Style.Reqiured("bootStrap").AtHead();
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.Extensions.Hosting
+@{
+    var theme = themeService.GetCurrentTheme();
 }
-
+@inject IThemeService themeService
 <!DOCTYPE html>
 
 <html style="height:100%">
 <head>
-    <meta name="viewport" content="width=device-width" />
     <title>@ViewBag.Title</title>
+    @if (this.WorkContext().OuterChainPicture)
+    {
+        <meta name="referrer" content="same-origin" />
+    }
+    @if (this.WorkContext().EnableResponsiveDesign)
+    {
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,maximum-scale=1.0" />
+    }
+    @if (theme != null)
+    {
+        if (ApplicationContext.HostingEnvironment.IsDevelopment())
+        {
+            <link type="text/css" async rel="stylesheet" href="@Url.Content(theme.UrlDebugger)" />
+        }
+        else
+        {
+            <link type="text/css" async rel="stylesheet" href="@Url.Content(theme.Url)" />
+        }
+    }
     @StyleAtHead()
     @ScriptAtHead()
 </head>

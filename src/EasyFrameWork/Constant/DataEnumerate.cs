@@ -1,4 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 namespace Easy.Constant
 {
@@ -17,10 +19,18 @@ namespace Easy.Constant
     {
         Create = 1,
         Update = 2,
-        Delete = 3,
-        Design = 4,
-        Publish = 5,
-        Unattached = 6,
-        Continue = 7
+        Delete = 4,
+        Design = 8,
+        Publish = 16,
+        Exit = 32,
+        Continue = 64,
+        UnAttach = 128,
+        CreateAndExit = Create | Exit,
+        UpdateAndExit = Update | Exit
+    }
+    public enum UserType
+    {
+        Administrator = 1,
+        Customer = 2
     }
 }

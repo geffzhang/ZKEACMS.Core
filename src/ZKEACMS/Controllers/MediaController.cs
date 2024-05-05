@@ -1,39 +1,46 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
-using System;
-using System.Collections.Generic;
-using System.IO;
-using ZKEACMS.Common.ViewModels;
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Easy.Constant;
 using Easy.Extend;
 using Easy.Mvc.Authorize;
 using Easy.Mvc.Controllers;
-using ZKEACMS.Media;
-using Microsoft.AspNetCore.Mvc;
-using Easy.Mvc.Attribute;
-using Easy.Mvc.Extend;
-using Easy.Image;
 using Easy.RepositoryPattern;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using ZKEACMS.Common.ViewModels;
+using ZKEACMS.Media;
 
 namespace ZKEACMS.Controllers
 {
-    [DefaultAuthorize]
+    [DefaultAuthorize(Policy = PermissionKeys.ViewMedia)]
     public class MediaController : BasicController<MediaEntity, string, IMediaService>
     {
-        public MediaController(IMediaService service)
+        private readonly ILogger _logger;
+        public MediaController(IMediaService service,
+            ILoggerFactory loggerFactory)
             : base(service)
         {
+            _logger = loggerFactory.CreateLogger<MediaController>();
         }
         [NonAction]
-        public override ActionResult Index()
+        public override IActionResult Index()
         {
             return base.Index();
         }
 
-        public ActionResult Index(string ParentId, int? pageIndex)
+        public IActionResult Index(string ParentId, int? pageIndex)
         {
             ParentId = ParentId ?? "#";
             Pagination pagin = new Pagination { PageIndex = pageIndex ?? 0 };
-            var medias = Service.Get(m => m.ParentID == ParentId, pagin).OrderByDescending(m => m.CreateDate);
+            var medias = Service.GetPage(ParentId, pagin);
             var viewModel = new MediaViewModel
             {
                 ParentID = ParentId,
@@ -65,12 +72,17 @@ namespace ZKEACMS.Controllers
             }
         }
 
-        public ActionResult Select(string ParentId, int? pageIndex)
+        public IActionResult Select(string ParentId, int? pageIndex)
         {
             ViewBag.PopUp = true;
             return Index(ParentId, pageIndex);
         }
-        [HttpPost]
+        public IActionResult MultiSelect(string ParentId, int? pageIndex)
+        {
+            ViewBag.MultiSelect = true;
+            return Select(ParentId, pageIndex);
+        }
+        [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageMedia)]
         public JsonResult Save(string id, string title, string parentId)
         {
             MediaEntity entity = null;
@@ -88,73 +100,125 @@ namespace ZKEACMS.Controllers
             }
             return Json(entity);
         }
-        [HttpPost]
-        public JsonResult Upload(string parentId, string folder)
+        [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageMedia)]
+        public async Task<IActionResult> Upload(string parentId, string folder, long size)
         {
             if (Request.Form.Files.Count > 0)
             {
-                if (folder.IsNotNullAndWhiteSpace())
-                {
-                    var parent = Service.Get(m => m.Title == folder && m.MediaType == (int)MediaType.Folder).FirstOrDefault();
-                    if (parent == null)
-                    {
-                        parent = new MediaEntity
-                        {
-                            Title = folder,
-                            MediaType = (int)MediaType.Folder,
-                            ParentID = "#"
-                        };
-                        Service.Add(parent);
-                    }
-                    parentId = parent.ID;
-                }
-                parentId = parentId ?? "#";
-                string fileName = Path.GetFileName(Request.Form.Files[0].FileName);
+                string pId = GetParentId(parentId, folder);
+                IFormFile formFile = Request.Form.Files[0];
+                string fileName = Path.GetFileName(formFile.FileName);
                 var entity = new MediaEntity
                 {
-                    ParentID = parentId,
-                    Title = fileName
+                    ParentID = pId,
+                    Title = fileName,
+                    Status = formFile.Length == size ? (int)RecordStatus.Active : (int)RecordStatus.InActive
                 };
-                string extension = Path.GetExtension(fileName).ToLower();
-                if (ImageHelper.IsImage(extension))
+                using (Stream stream = formFile.OpenReadStream())
                 {
-                    entity.Url = Request.SaveImage();
-                }
-                else
-                {
-                    entity.Url = Request.SaveFile();
+                    await Service.UploadMediaAsync(entity, stream);
                 }
                 if (entity.Url.IsNotNullAndWhiteSpace())
                 {
-                    Service.Add(entity);
                     entity.Url = Url.Content(entity.Url);
                 }
                 return Json(entity);
             }
             return Json(false);
         }
-        public override JsonResult Delete(string ids)
+
+        private string GetParentId(string parentId, string folder)
         {
-            DeleteMedia(ids);
+            if (parentId.IsNotNullAndWhiteSpace()) return parentId;
+
+            if (folder.IsNotNullAndWhiteSpace())
+            {
+                var parent = Service.Get(m => m.Title == folder && m.MediaType == (int)MediaType.Folder).FirstOrDefault();
+                if (parent == null)
+                {
+                    parent = new MediaEntity
+                    {
+                        Title = folder,
+                        MediaType = (int)MediaType.Folder,
+                        ParentID = "#"
+                    };
+                    Service.Add(parent);
+                }
+                return parent.ID;
+            }
+
+            return "#";
+        }
+
+        [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageMedia)]
+        public async Task<IActionResult> AppendFile(string id, long position, long size)
+        {
+            if (Request.Form.Files.Count > 0)
+            {
+                bool isCompleted = position + Request.Form.Files[0].Length == size;
+                using (Stream stream = Request.Form.Files[0].OpenReadStream())
+                {
+                    var media = (await Service.AppendMediaAsync(id, stream, isCompleted))?.Result;
+                    if (media == null) return Json(false);
+
+                    media.Url = Url.Content(media.Url);
+                    return Json(media);
+                }
+            }
+            return Json(false);
+        }
+
+        [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageMedia)]
+        public async Task<IActionResult> UploadBlob([FromForm] IFormCollection formData)
+        {
+            if (formData.Files.Count > 0)
+            {
+                using (Stream stream = formData.Files[0].OpenReadStream())
+                {
+                    var media = (await Service.UploadFromBlobImageAsync(stream, formData.Files[0].FileName))?.Result;
+                    if (media != null)
+                    {
+                        return Json(new { location = Url.Content(media.Url) });
+                    }
+                }
+            }
+            return Json(null);
+        }
+
+        [DefaultAuthorize(Policy = PermissionKeys.ManageMedia)]
+        public override IActionResult Delete(string ids)
+        {
             return base.Delete(ids);
         }
 
-        private void DeleteMedia(string mediaId)
+        [HttpPost]
+        public async Task<IActionResult> DownLoadExternalImage(string[] images)
         {
-            var media = Service.Get(mediaId);
-            if (media != null && media.MediaType != (int)MediaType.Folder)
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            foreach (var imgUrl in images)
             {
-                if (media.Url.StartsWith("http://") || media.Url.StartsWith("https://"))
+                if (result.ContainsKey(imgUrl)) continue;
+
+                try
                 {
-                    media.Url = "~" + new Uri(media.Url).AbsolutePath;
+                    var media = (await Service.UploadFromExternalImageAsync(imgUrl))?.Result;
+                    if (media == null) continue;
+
+                    result.Add(imgUrl, Url.Content(media.Url));
                 }
-                Request.DeleteFile(media.Url);
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
             }
-            else
-            {
-                Service.Get(m => m.ParentID == mediaId).ToList().Each(m => DeleteMedia(m.ID));
-            }
-            Service.Remove(mediaId);
+            return Json(result.Select(m => new KeyValuePair<string, string>(m.Key, Url.Content(m.Value))));
+        }
+
+
+        public async Task<IActionResult> Proxy(string url)
+        {
+            return File(await Service.GetStreamAsync(url), "image/jpeg");
         }
     }
 }

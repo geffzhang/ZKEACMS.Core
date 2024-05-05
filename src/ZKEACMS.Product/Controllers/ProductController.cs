@@ -1,5 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
-
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 using Easy.Constant;
 using Easy.Extend;
@@ -12,6 +13,8 @@ using System.Linq;
 using ZKEACMS.Product.ActionFilter;
 using ZKEACMS.Product.Models;
 using ZKEACMS.Product.Service;
+using Microsoft.Extensions.DependencyInjection;
+using ZKEACMS.Product.ViewModel;
 
 namespace ZKEACMS.Product.Controllers
 {
@@ -19,45 +22,47 @@ namespace ZKEACMS.Product.Controllers
     public class ProductController : BasicController<ProductEntity, int, IProductService>
     {
         private readonly IProductCategoryService _productCategoryService;
+        private readonly IProductCategoryTagService _productCategoryTagService;
         private readonly IAuthorizer _authorizer;
-        public ProductController(IProductService service, IProductCategoryService productCategoryService, IAuthorizer authorizer)
+        public ProductController(IProductService service, IProductCategoryService productCategoryService, IAuthorizer authorizer, IProductCategoryTagService productCategoryTagService)
             : base(service)
         {
             _productCategoryService = productCategoryService;
+            _productCategoryTagService = productCategoryTagService;
             _authorizer = authorizer;
         }
         [DefaultAuthorize(Policy = PermissionKeys.ViewProduct)]
-        public override ActionResult Index()
+        public override IActionResult Index()
         {
             return base.Index();
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageProduct)]
-        public override ActionResult Create()
+        public override IActionResult Create()
         {
             return base.Create();
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageProduct)]
-        public override ActionResult Create(ProductEntity entity)
+        public override IActionResult Create(ProductEntity entity)
         {
-            var result = base.Create(entity);
-            if (entity.ActionType == ActionType.Publish)
+            if (entity.ActionType.HasFlag(ActionType.Publish) && _authorizer.Authorize(PermissionKeys.PublishProduct))
             {
-                Service.Publish(entity.ID);
+                Service.Publish(entity);
             }
+            var result = base.Create(entity);
             return result;
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageProduct)]
-        public override ActionResult Edit(int Id)
+        public override IActionResult Edit(int Id)
         {
             return base.Edit(Id);
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageProduct)]
-        public override ActionResult Edit(ProductEntity entity)
+        public override IActionResult Edit(ProductEntity entity)
         {
             var result = base.Edit(entity);
-            if (entity.ActionType == ActionType.Publish && _authorizer.Authorize(PermissionKeys.PublishProduct))
+            if (entity.ActionType.HasFlag(ActionType.Publish) && _authorizer.Authorize(PermissionKeys.PublishProduct))
             {
-                Service.Publish(entity.ID);
+                Service.Publish(entity);
             }
             if (Request.Query["ReturnUrl"].Count > 0)
             {
@@ -66,12 +71,12 @@ namespace ZKEACMS.Product.Controllers
             return result;
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageProduct)]
-        public override JsonResult GetList(DataTableOption query)
+        public override IActionResult GetList(DataTableOption query)
         {
             return base.GetList(query);
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageProduct)]
-        public override JsonResult Delete(int id)
+        public override IActionResult Delete(int id)
         {
             return base.Delete(id);
         }
@@ -85,25 +90,46 @@ namespace ZKEACMS.Product.Controllers
         {
             if (products != null && products.Any())
             {
+                Service.BeginBulkSave();
                 products.Each(m =>
                 {
                     var product = Service.Get(m.ID);
                     if (product != null)
                     {
                         product.OrderIndex = m.OrderIndex;
-                        Service.Update(product, false);
+                        Service.Update(product);
                     }
                 });
-                Service.SaveChanges();
+                Service.EndBulkSave();
             }
             return Json(new AjaxResult { Status = AjaxStatus.Normal });
         }
         public JsonResult GetProducts(int ProductCategoryID)
         {
             var ids = _productCategoryService.Get(m => m.ParentID == ProductCategoryID || m.ID == ProductCategoryID).Select(m => m.ID);
-            return Json(Service.Get(m => ids.Any(id => id == m.ProductCategoryID))
+            return Json(Service.Get(m => ids.Contains(m.ProductCategoryID))
                 .OrderBy(m => m.OrderIndex)
                 .ThenByDescending(m => m.ID).Select(m => new { m.ID, m.Title }));
+        }
+        [HttpPost]
+        public IActionResult ProduceTags(int productId, int ProductCategoryId)
+        {
+            var tags = _productCategoryTagService.Get(m => m.ProductCategoryId == ProductCategoryId);
+            if (productId != 0)
+            {
+                var productTags = HttpContext.RequestServices.GetService<IProductTagService>().Get(m => m.ProductId == productId);
+                foreach (var item in tags)
+                {
+                    item.Selected = productTags.Any(m => m.TagId == item.ID);
+                }
+            }
+            return View(new ProductTagViewModel { ProductTags = tags });
+        }
+
+        [DefaultAuthorize(Policy = PermissionKeys.ViewProduct)]
+        public IActionResult Select()
+        {
+            return View();
         }
     }
 }

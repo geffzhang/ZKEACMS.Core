@@ -1,10 +1,13 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 using ZKEACMS.SectionWidget.Models;
 using ZKEACMS.SectionWidget.Service;
 using Easy.Constant;
 using Microsoft.AspNetCore.Mvc;
 using Easy.Mvc.Authorize;
+using Easy.Extend;
 
 namespace ZKEACMS.SectionWidget.Controllers
 {
@@ -41,7 +44,7 @@ namespace ZKEACMS.SectionWidget.Controllers
             {
                 return View("Form", content);
             }
-            if (content.ActionType == ActionType.Create)
+            if (content.ActionType.HasFlag(ActionType.Create))
             {
                 _sectionContentProviderService.Add(content);
             }

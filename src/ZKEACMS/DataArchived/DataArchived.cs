@@ -1,12 +1,16 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.MetaData;
 using Easy.Models;
+using Easy.RepositoryPattern;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ZKEACMS.DataArchived
 {
-    [ViewConfigure(typeof(DataArchivedMetaData)), Table("DataArchived")]
+    [DataTable("DataArchived")]
     public class DataArchived : EditorEntity
     {
         [Key]
@@ -18,7 +22,7 @@ namespace ZKEACMS.DataArchived
     {
         protected override void ViewConfigure()
         {
-
+            ViewConfig(m => m.Data).AsTextArea();
         }
     }
 }

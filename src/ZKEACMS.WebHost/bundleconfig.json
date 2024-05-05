@@ -154,5 +154,65 @@
     "inputFiles": [
       "wwwroot/js/tinymce/plugins/pasteImage/plugin.js"
     ]
+  },
+  {
+    "outputFileName": "wwwroot/css/Customer.min.css",
+    "inputFiles": [
+      "wwwroot/css/Customer.css"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/js/tinymce/plugins/filebrowser/plugin.min.js",
+    "inputFiles": [
+      "wwwroot/js/tinymce/plugins/filebrowser/plugin.js"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/js/tinymce/plugins/imagelocal/plugin.min.js",
+    "inputFiles": [
+      "wwwroot/js/tinymce/plugins/imagelocal/plugin.js"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/css/rule.min.css",
+    "inputFiles": [
+      "wwwroot/css/rule.css"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/lib/jquery-validation/dist/additional-methods.min.js",
+    "inputFiles": [
+      "wwwroot/lib/jquery-validation/dist/additional-methods.js"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/js/captcha.min.js",
+    "inputFiles": [
+      "wwwroot/js/captcha.js"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/css/captcha.min.css",
+    "inputFiles": [
+      "wwwroot/css/captcha.css"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/js/list-editor.min.js",
+    "inputFiles": [
+      "wwwroot/js/list-editor.js"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/js/tinymce/plugins/docx2html/plugin.min.js",
+    "inputFiles": [
+      "wwwroot/js/tinymce/plugins/docx2html/plugin.js"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/lib/monaco/code-editor.min.js",
+    "inputFiles": [
+      "wwwroot/lib/monaco/code-editor.js"
+    ]
   }
 ]

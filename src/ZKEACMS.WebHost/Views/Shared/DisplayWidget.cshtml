@@ -1,0 +1,7 @@
+@using Microsoft.Extensions.Options
+@model WidgetViewModelPart
+<div style="@Model.Widget.CustomStyle">
+    <div class="widget @Model.Widget.CustomClass">
+        @await Html.DisplayWidgetPart(Model)
+    </div>
+</div>

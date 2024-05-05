@@ -5,6 +5,10 @@
         return;
     }
     Layout = Model.Layout;
+    if (Authorizer.Authorize(PermissionKeys.ManagePage) && this.WorkContext().PageMode != ZKEACMS.Filter.PageViewMode.ViewOnly)
+    {
+        Style.Reqiured("Layout").AtHead();
+    }
 }
 @for (int i = 0; i < Model.Html.Count; i++)
 {
@@ -19,25 +23,7 @@
             {
                 foreach (var widgetPart in Model.ZoneWidgets[zoneId].OrderBy(m => m.Widget.Position).ThenBy(m => m.Widget.WidgetName))
                 {
-                    <div style="@widgetPart.Widget.CustomStyle">
-                        <div class="widget @widgetPart.Widget.CustomClass">
-                            @if (widgetPart.Widget.Title.IsNotNullAndWhiteSpace())
-                            {
-                                <div class="panel panel-default">
-                                    <div class="panel-heading">
-                                        @widgetPart.Widget.Title
-                                    </div>
-                                    <div class="panel-body">
-                                        @Html.DisPlayWidget(widgetPart)
-                                    </div>
-                                </div>
-                            }
-                            else
-                            {
-                                @Html.DisPlayWidget(widgetPart)
-                            }
-                        </div>
-                    </div>
+                    @await Html.DisplayWidget(widgetPart)
                 }
             }
         }
@@ -46,5 +32,19 @@
     else
     {
         @Html.Raw(item.Html)
+    }
+}
+@if (this.WorkContext().PageMode == ZKEACMS.Filter.PageViewMode.ViewOnly)
+{
+    using (Script.AtFoot())
+    {
+        <script type="text/javascript">
+            $(function () {
+                $(document).on("click", "a", function () {
+                    var href = $(this).attr("href") || "";
+                    return href.indexOf("#") == 0 || href == "javascript:" || href == "javascript:void(0)"
+                });
+            });
+        </script>
     }
 }

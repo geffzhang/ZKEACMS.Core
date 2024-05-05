@@ -1,4 +1,8 @@
-﻿$(function () {
+﻿/*! http://www.zkea.net/
+ * Copyright (c) ZKEASOFT. All rights reserved.
+ * http://www.zkea.net/licenses */
+
+$(function () {
     $(".zone").sortable({
         items: ">div:not(.zoneName)",
         placeholder: "sorting",
@@ -16,8 +20,8 @@
                     async: false,
                     data: {
                         ID: ui.item.data("id"),
-                        ZoneID: $("input.zoneId", this).val(),
-                        PageID: $("#pageId").val(),
+                        ZoneId: $("input.zoneId", this).val(),
+                        PageId: $("#pageId").val(),
                         AssemblyName: ui.item.data("assemblyname"),
                         ServiceTypeName: ui.item.data("servicetypename"),
                         Position: 1
@@ -51,12 +55,16 @@
 
     $(".templates ul li").draggable({ helper: "clone", connectToSortable: ".zone" });
     $(document).on("click", ".zoneToolbar .delete", function () {
-        var th = $(this);        
-        $.post(th.data("url"), { ID: th.data("id") }, function (data) {
+        var th = $(this);
+        var id = th.data("id");
+        $.post(th.data("url"), { ID: id }, function (data) {
             if (data) {
-                $("#widget_" + data).parent().remove();
+                $("#widget_" + id).parent().remove();
             }
         }, "json");
+    }).on("click", ".zoneToolbar .more", function () {
+        $(this).siblings(".toggle-hidden").toggleClass("hidden");
+        $(this).toggleClass("hidden");
     });
     $(document).on("click", ".templates .tool-open", function () {
         $(this).parent().toggleClass("active");
@@ -84,7 +92,7 @@
         var styleTarget = $(this).closest(".widget").parent();
         styleTarget.toggleClass("custom-style-target");
         window.top.Easy.ShowUrlWindow({
-            url: '/js/StyleEditor/index.html',
+            url: '/admin/StyleEditor/Edit',
             width: 1024,
             title: "编辑样式",
             onLoad: function (box) {
@@ -118,4 +126,16 @@
     if ($(window).width() > 1600) {
         $(".templates").addClass("active");
     }
+
+    $(document).on("show.bs.modal", "#mobile-frame", function () {
+        if (window.innerHeight < 740) {
+            $(".mobile", this).addClass("mini");
+        } else {
+            $(".mobile", this).removeClass("mini");
+        }
+        $("iframe", this).attr("src", $(this).data("src"));
+    });
+    $(document).on("hidden.bs.modal", "#mobile-frame", function () {
+        $("iframe", this).html("").attr("src", "about:blank");
+    });
 });

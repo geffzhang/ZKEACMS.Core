@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System.Collections.Generic;
 using ZKEACMS.Layout;
 using ZKEACMS.Page;
@@ -11,8 +14,8 @@ namespace ZKEACMS.Common.ViewModels
     {
         public LayoutEntity Layout { get; set; }
         public PageEntity Page { get; set; }
-        public string PageID { get; set; }
-        public string LayoutID { get; set; }
+        public string PageId { get; set; }
+        public string LayoutId { get; set; }
         public IEnumerable<ZoneEntity> Zones { get; set; }
         public IEnumerable<WidgetBase> Widgets { get; set; }
         public LayoutHtmlCollection LayoutHtml { get; set; }

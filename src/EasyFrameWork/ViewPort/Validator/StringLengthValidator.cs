@@ -1,4 +1,8 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Easy.Extend;
 
 namespace Easy.ViewPort.Validator
 {
@@ -6,32 +10,63 @@ namespace Easy.ViewPort.Validator
     {
         public StringLengthValidator(int min, int max)
         {
-            if (min > 0)
-            {
-                this.BaseErrorMessage = "{0}的长度应大于" + min + "且小于" + max;
-            }
-            else
-            {
-                this.BaseErrorMessage = "{0}的长度应小于" + max;
-            }
             this.Max = max;
             this.Min = min;
+            if (Max > 0 && Min > 0)
+            {
+                this.BaseErrorMessage = "{0} length should be between {1} to {2}";
+            }
+            else if (Max > 0)
+            {
+                this.BaseErrorMessage = "{0} length should be less than {1}";
+            }
+            else if (Min > 0)
+            {
+                this.BaseErrorMessage = "{0} length should be greater than {1}";
+            }
+
         }
         public int Max { get; set; }
         public int Min { get; set; }
 
         public override bool Validate(object value)
         {
+
             if (value == null) return true;
             string val = value.ToString();
-            if (val.Length <= Max)
+
+            if (Max > 0 && Min > 0)
             {
-                return true;
+                return val.Length >= Min && val.Length <= Max;
+            }
+            else if (Max > 0)
+            {
+                return val.Length <= Max;
+            }
+            else if (Min > 0)
+            {
+                return val.Length >= Min;
             }
             else
             {
                 return false;
             }
+        }
+        public override string FormatMessage(string key)
+        {
+            if (Max > 0 && Min > 0)
+            {
+                return string.Format(key, GetDisplayName(), Min, Max);
+            }
+            else if (Max > 0)
+            {
+                return string.Format(key, GetDisplayName(), Max);
+            }
+            else if (Min > 0)
+            {
+                return string.Format(key, GetDisplayName(), Min);
+            }
+            return string.Empty;
         }
     }
 }

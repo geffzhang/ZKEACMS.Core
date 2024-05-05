@@ -1,4 +1,8 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using System;
 using System.Collections.Generic;
 
 namespace ZKEACMS
@@ -10,7 +14,10 @@ namespace ZKEACMS
         public string Icon { get; set; }
         public int Order { get; set; }
         public string PermissionKey { get; set; }
-        public IEnumerable<AdminMenu> Children { get; set; } 
+        public Func<bool> HasPermission { get; set; }
+        public string Group { get; set; }
+        public string PluginName { get; set; }
+        public IEnumerable<AdminMenu> Children { get; set; }
     }
     public static class AdminMenus
     {
@@ -18,29 +25,29 @@ namespace ZKEACMS
         {
             new AdminMenu
             {
-                Title = "仪表盘",
+                Title = "Ddashboard",
                 Icon = "glyphicon-dashboard",
                 Url = "~/admin",
                 Order = 0
             },
             new AdminMenu
             {
-                Title = "布局",
+                Title = "Layout",
                 Icon = "glyphicon-th-list",
                 Order = 1,
                 Children = new List<AdminMenu>
                 {
                     new AdminMenu
                     {
-                        Title = "布局列表",
-                        Url = "~/admin/Layout",
+                        Title = "Layout List",
+                        Url = "~/admin/layout",
                         Icon = "glyphicon-align-justify",
                         PermissionKey = PermissionKeys.ViewLayout
                     },
                     new AdminMenu
                     {
-                        Title = "布局组件",
-                        Url = "~/admin/Layout/LayoutWidget",
+                        Title = "Layout Content",
+                        Url = "~/admin/layout/layoutwidget",
                         Icon = "glyphicon-th-list",
                         PermissionKey = PermissionKeys.ViewLayout
                     }
@@ -48,85 +55,158 @@ namespace ZKEACMS
             },
             new AdminMenu
             {
-                Title = "页面",
+                Title = "Page",
                 Icon = "glyphicon-eye-open",
-                Url = "~/admin/Page",
+                Url = "~/admin/page",
                 Order = 2,
                 PermissionKey = PermissionKeys.ViewPage
             },
             new AdminMenu
             {
-                Title = "导航",
+                Title = "Navigation",
                 Icon = "glyphicon-retweet",
-                Url = "~/admin/Navigation",
+                Url = "~/admin/navigation",
                 Order = 3,
                 PermissionKey = PermissionKeys.ViewNavigation
             },
             new AdminMenu
             {
-                Title = "主题",
-                Icon = "glyphicon-blackboard",
-                Url = "~/admin/Theme",
-                Order = 4,
-                PermissionKey = PermissionKeys.ViewTheme
-            },
-            new AdminMenu
-            {
-                Title = "媒体库",
-                Icon = "glyphicon-picture",
-                Url = "~/admin/Media",
+                Title = "Generate Content",
+                Icon = "glyphicon-tree-deciduous",
                 Order = 5,
-                PermissionKey = PermissionKeys.ViewMedia
+                Children = new List<AdminMenu>
+                {
+                    new AdminMenu
+                    {
+                        Title = "Rule",
+                        Icon = "glyphicon-cloud",
+                        Url = "~/admin/rule",
+                        Order = 1,
+                        PermissionKey = PermissionKeys.ViewPage
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Carousel",
+                        Icon = "glyphicon-eye-open",
+                        Url = "~/admin/carousel",
+                        Order = 2,
+                        PermissionKey = PermissionKeys.ViewCarousel
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Media",
+                        Icon = "glyphicon-picture",
+                        Url = "~/admin/media",
+                        Order = 3,
+                        PermissionKey = PermissionKeys.ViewMedia
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Theme",
+                        Icon = "glyphicon-blackboard",
+                        Url = "~/admin/theme",
+                        Order = 4,
+                        PermissionKey = PermissionKeys.ViewTheme
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Theme Template",
+                        Icon = "glyphicon-list-alt",
+                        Url = "~/admin/template",
+                        Order = 5,
+                        PermissionKey = PermissionKeys.ViewTemplate
+                    }
+                }
             },
             new AdminMenu
             {
-                Title = "焦点图",
-                Icon = "glyphicon-eye-open",
-                Url = "~/admin/Carousel",
-                Order = 6,
-                PermissionKey = PermissionKeys.ViewCarousel
-            },
-            new AdminMenu
-            {
-                Title = "系统",
+                Title = "System",
                 Icon = "glyphicon-cog",
                 Order = 1000,
                 Children = new List<AdminMenu>
                 {
                     new AdminMenu
                     {
-                        Title = "用户",
+                        Title = "User",
                         Icon = "glyphicon-user",
-                        Url = "~/admin/User",
+                        Url = "~/admin/user",
                         Order = 1,
                         PermissionKey = PermissionKeys.ViewUser
                     },
                     new AdminMenu
                     {
-                        Title = "角色",
+                        Title = "Change Password",
+                        Icon = "glyphicon-lock",
+                        Url = "~/admin/user/password",
+                        Order = 2
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Role",
                         Icon = "glyphicon-eye-open",
-                        Url = "~/admin/Roles",
-                        Order = 2,
+                        Url = "~/admin/roles",
+                        Order = 3,
                         PermissionKey = PermissionKeys.ViewRole
                     },
                     new AdminMenu
                     {
-                        Title = "错误日志",
+                        Title = "Logs",
                         Icon = "glyphicon-exclamation-sign",
-                        Url = "~/admin/EventViewer",
-                        Order = 3,
+                        Url = "~/admin/eventviewer",
+                        Order = 4,
                         PermissionKey = PermissionKeys.ManageEventViewer
                     },
                     new AdminMenu
                     {
-                        Title = "系统设置",
+                        Title = "SMTP Config",
+                        Icon = "glyphicon-envelope",
+                        Url = "~/admin/smtpsetting/config",
+                        Order = 5,
+                        PermissionKey = PermissionKeys.SMTPSetting
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Robots.txt",
+                        Icon = "glyphicon-magnet",
+                        Url = "~/admin/robotssetting/config",
+                        Order = 6,
+                        PermissionKey = PermissionKeys.RobotsSetting
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Translate",
                         Icon = "glyphicon-cog",
-                        Url = "~/admin/ApplicationSetting",
-                        Order = 4,
+                        Url = "~/admin/language",
+                        Order = 7,
+                        PermissionKey = PermissionKeys.ManageLanguage
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Currency",
+                        Icon = "glyphicon-usd",
+                        Url = "~/admin/currencyoption/config",
+                        Order = 8,
+                        PermissionKey = PermissionKeys.ConfigCurrency
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Plugins",
+                        Icon = "glyphicon-equalizer",
+                        Url = "~/admin/plugin",
+                        Order = 99,
+                        PermissionKey = PermissionKeys.ViewPlugins
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Other Settings",
+                        Icon = "glyphicon-cog",
+                        Url = "~/admin/applicationsetting",
+                        Order = 100,
                         PermissionKey = PermissionKeys.ViewApplicationSetting
                     }
                 }
             }
         };
+        public static List<IEnumerable<AdminMenu>> PluginMenu { get; } = new List<IEnumerable<AdminMenu>>();
     }
 }

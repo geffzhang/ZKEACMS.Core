@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.IO;
 using System.Linq;
@@ -14,26 +17,31 @@ namespace ZKEACMS.DataArchived
     {
         private const string ArchiveLock = "ArchiveLock";
 
-        public DataArchivedService(IApplicationContext applicationContext) : base(applicationContext)
+        public DataArchivedService(IApplicationContext applicationContext, CMSDbContext dbContext) : base(applicationContext, dbContext)
         {
         }
+
+        public override DbSet<DataArchived> CurrentDbSet => DbContext.DataArchived;
 
         public JsonConverter[] JsonConverters { get; set; }
 
-        public override DbSet<DataArchived> CurrentDbSet
+        public override IQueryable<DataArchived> Get()
         {
-            get
-            {
-                return DbContext.DataArchived;
-            }
+            return CurrentDbSet.AsNoTracking();
         }
 
-        public override void Add(DataArchived item)
+        public override DataArchived Get(params object[] primaryKey)
+        {
+            string key = primaryKey[0].ToString();
+            return Get().FirstOrDefault(m => m.ID == key);
+        }
+
+        public override ServiceResult<DataArchived> Add(DataArchived item)
         {
             lock (ArchiveLock)
             {
                 Remove(item.ID);
-                base.Add(item);
+                return base.Add(item);
             }
 
         }
@@ -54,6 +62,17 @@ namespace ZKEACMS.DataArchived
             return result;
         }
 
+        public T Get<T>(string key) where T : class
+        {
+            var archived = Get(key);
+            T result = null;
+            if (archived != null && archived.Data.IsNotNullAndWhiteSpace())
+            {
+                result = Deserialize<T>(archived.Data);
+            }
+            return result;
+        }
+
         private string Serialize(object obj)
         {
             return JsonConvert.SerializeObject(obj, Formatting.None, JsonConverters);
@@ -63,5 +82,25 @@ namespace ZKEACMS.DataArchived
         {
             return JsonConvert.DeserializeObject<T>(data, JsonConverters);
         }
+
+        public void Archive<T>(string key, T obj)
+        {
+            var archived = Get(key);
+            if (archived == null)
+            {
+                archived = new DataArchived
+                {
+                    ID = key,
+                    Data = Serialize(obj)
+                };
+                base.Add(archived);
+            }
+            else
+            {
+                archived.Data = Serialize(obj);
+                Update(archived);
+            }
+        }
+
     }
 }

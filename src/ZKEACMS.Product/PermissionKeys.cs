@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 namespace ZKEACMS.Product
 {
     public class PermissionKeys
@@ -8,5 +11,7 @@ namespace ZKEACMS.Product
         public const string PublishProduct = "Product_Publish";
         public const string ViewProductCategory = "ProductCategory_View";
         public const string ManageProductCategory = "ProductCategory_Manage";
+        public const string ViewProductCategoryTag = "ProductCategoryTag_View";
+        public const string ManageProductCategoryTag = "ProductCategoryTag_Manage";
     }
 }

@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using ZKEACMS.SectionWidget.Models;
 using Easy.RepositoryPattern;
 using Easy;
@@ -7,18 +10,11 @@ using System;
 
 namespace ZKEACMS.SectionWidget.Service
 {
-    public class SectionTemplateService : ServiceBase<SectionTemplate,SectionDbContext>, ISectionTemplateService
+    public class SectionTemplateService : ServiceBase<SectionTemplate, CMSDbContext>, ISectionTemplateService
     {
-        public SectionTemplateService(IApplicationContext applicationContext) : base(applicationContext)
+        public SectionTemplateService(IApplicationContext applicationContext, CMSDbContext dbContext) : base(applicationContext, dbContext)
         {
         }
-
-        public override DbSet<SectionTemplate> CurrentDbSet
-        {
-            get
-            {
-                return DbContext.SectionTemplate;
-            }
-        }
+        
     }
 }

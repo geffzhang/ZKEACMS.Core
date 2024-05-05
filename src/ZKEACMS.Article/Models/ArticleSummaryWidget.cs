@@ -1,6 +1,10 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.Constant;
 using Easy.MetaData;
+using Easy.RepositoryPattern;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using ZKEACMS.Extend;
@@ -9,7 +13,7 @@ using ZKEACMS.Widget;
 
 namespace ZKEACMS.Article.Models
 {
-    [ViewConfigure(typeof(ArticleSummaryWidgetMetaData)),Table("ArticleSummaryWidget")]
+    [DataTable("ArticleSummaryWidget")]
     public class ArticleSummaryWidget : BasicWidget
     {
         public string SubTitle { get; set; }
@@ -26,7 +30,7 @@ namespace ZKEACMS.Article.Models
             ViewConfig(m => m.Style).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary);
             ViewConfig(m => m.DetailLink).AsTextBox().Order(NextOrder()).PageSelector();
             ViewConfig(m => m.Summary).AsTextArea().Order(NextOrder()).AddClass("html");
-            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary);
+            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary).AsWidgetTemplateChooser();
         }
     }
 

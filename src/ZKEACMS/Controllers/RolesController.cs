@@ -1,8 +1,6 @@
-/* 
- * http://www.zkea.net/ 
- * Copyright 2017 ZKEASOFT 
- * http://www.zkea.net/licenses 
- */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 using System.Collections.Generic;
 using System.Linq;
@@ -16,102 +14,72 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ZKEACMS.Controllers
 {
-    [DefaultAuthorize]
+    [DefaultAuthorize(Policy = PermissionKeys.ViewRole)]
     public class RolesController : BasicController<RoleEntity, int, IRoleService>
     {
-        private readonly IPermissionService _permissionService;
-        public RolesController(IRoleService userService, IPermissionService permissionService)
+        public RolesController(IRoleService userService)
             : base(userService)
         {
-            _permissionService = permissionService;
         }
         [NonAction]
-        public override ActionResult Create(RoleEntity entity)
+        public override IActionResult Create(RoleEntity entity)
         {
             return base.Create(entity);
         }
-        [HttpPost]
-        public ActionResult Create(RoleEntity entity, List<PermissionDescriptor> PermissionSet)
+        [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageRole)]
+        public IActionResult Create(RoleEntity entity, List<Easy.Modules.Role.PermissionDescriptor> PermissionSet)
         {
-            Service.Add(entity);
-            var permissions = new List<Permission>();
-            PermissionSet.Where(m => m.Checked ?? false).Each(m =>
+            var result = Service.Add(entity, PermissionSet);
+            if (result.HasViolation)
             {
-                permissions.Add(new Permission
+                foreach (var item in result.RuleViolations)
                 {
-                    RoleId = entity.ID,
-                    PermissionKey = m.Key,
-                    Module = m.Module,
-                    Title = m.Title,
-                    ActionType = ActionType.Create
-                });
-            });
-            _permissionService.AddRange(permissions.ToArray());
-            return RedirectToAction("Index");
+                    ModelState.AddModelError(item.ParameterName, item.ErrorMessage);
+                }
+                return View(entity);
+            }
+            if (entity.ActionType.HasFlag(ActionType.Exit))
+            {
+                return RedirectToAction("Index");
+            }
+            return RedirectToAction("Edit", new { Id = entity.ID });
         }
-        public override ActionResult Edit(int Id)
+        public override IActionResult Edit(int Id)
         {
-            ViewBag.Permissions = _permissionService.Get(m => m.RoleId == Id).ToList();
+            ViewBag.Permissions = Service.GetPermission(Id);
             return base.Edit(Id);
         }
+
         [NonAction]
-        public override ActionResult Edit(RoleEntity entity)
+        public override IActionResult Edit(RoleEntity entity)
         {
             return base.Edit(entity);
         }
-        [HttpPost]
-        public ActionResult Edit(RoleEntity entity, List<PermissionDescriptor> PermissionSet)
+
+        [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageRole)]
+        public IActionResult Edit(RoleEntity entity, List<Easy.Modules.Role.PermissionDescriptor> PermissionSet)
         {
-            var permissions = _permissionService.Get(m => m.RoleId == entity.ID).ToList();
-            permissions.Each(m => m.ActionType = ActionType.Delete);
-            PermissionSet.Where(m => m.Checked ?? false).Each(m =>
+            var result = Service.Update(entity, PermissionSet);
+            if (result.HasViolation)
             {
-                bool exists = false;
-                foreach (var item in permissions)
+                ViewBag.Permissions = Service.GetPermission(entity.ID);
+                foreach (var item in result.RuleViolations)
                 {
-                    if (item.PermissionKey == m.Key)
-                    {
-                        item.ActionType = ActionType.Update;
-                        exists = true;
-                    }
+                    ModelState.AddModelError(item.ParameterName, item.ErrorMessage);
                 }
-                if (!exists)
-                {
-                    permissions.Add(new Permission
-                    {
-                        RoleId = entity.ID,
-                        PermissionKey = m.Key,
-                        Module = m.Module,
-                        Title = m.Title,
-                        ActionType = ActionType.Create
-                    });
-                }
-
-            });
-            Service.Update(entity);
-            permissions.Each(m =>
+                return View(entity);
+            }
+            if (entity.ActionType.HasFlag(ActionType.Exit))
             {
-                switch (m.ActionType)
-                {
-                    case ActionType.Create:
-                        {
-                            _permissionService.Add(m);
-                            break;
-                        }
-                    case ActionType.Update:
-                        {
-                            _permissionService.Update(m);
-                            break;
-                        }
-                    case ActionType.Delete:
-                        {
-                            _permissionService.Remove(m);
-                            break;
-                        }
-                }
-            });
+                return RedirectToAction("Index");
+            }
+            return RedirectToAction("Edit", new { Id = entity.ID });
+        }
 
-            return RedirectToAction("Index");
+        [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageRole)]
+        public override IActionResult Delete(int id)
+        {
+            return base.Delete(id);
         }
     }
 }

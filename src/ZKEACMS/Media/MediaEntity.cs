@@ -1,12 +1,17 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.MetaData;
 using Easy.Models;
+using Easy.RepositoryPattern;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.IO;
 
 namespace ZKEACMS.Media
 {
-    [ViewConfigure(typeof(MediaEntityMetaData)), Table("CMS_Media")]
+    [DataTable("CMS_Media")]
     public class MediaEntity : EditorEntity
     {
         [Key]
@@ -15,6 +20,7 @@ namespace ZKEACMS.Media
         public int MediaType { get; set; }
         public string Url { get; set; }
 
+        [NotMapped]
         public string MediaTypeImage
         {
             get { return ((MediaType)MediaType).ToString().ToLower(); }

@@ -1,11 +1,16 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy.MetaData;
 using System.ComponentModel.DataAnnotations.Schema;
+using ZKEACMS.Extend;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.SectionWidget.Models
 {
-    [ViewConfigure(typeof(SectionContentVideoMetaData)), Table("SectionContentVideo")]
+    [DataTable("SectionContentVideo")]
     public class SectionContentVideo : SectionContentBasic
     {
         public string VideoTitle { get; set; }
@@ -14,7 +19,7 @@ namespace ZKEACMS.SectionWidget.Models
         public int? Height { get; set; }
         public string Url { get; set; }
         public string Code { get; set; }
-
+        [NotMapped]
         public override int SectionContentType
         {
             get
@@ -38,7 +43,7 @@ namespace ZKEACMS.SectionWidget.Models
             ViewConfig(m => m.Status).AsHidden();
             ViewConfig(m => m.Description).AsHidden();
             ViewConfig(m => m.VideoTitle).AsTextBox().Required();
-            ViewConfig(m => m.Thumbnail).AsTextBox().Required().AddClass(StringKeys.SelectImageClass).AddProperty("data-url", Urls.SelectMedia);
+            ViewConfig(m => m.Thumbnail).AsTextBox().Required().MediaSelector();
             ViewConfig(m => m.Url).AsTextBox().AddClass(StringKeys.SelectVideoClass).AddProperty("data-url", Urls.SelectMedia);
             ViewConfig(m => m.Code).AsTextArea().MaxLength(500);
         }

@@ -1,4 +1,8 @@
-﻿$(function () {
+﻿/*! http://www.zkea.net/
+ * Copyright (c) ZKEASOFT. All rights reserved.
+ * http://www.zkea.net/licenses */
+
+$(function () {
     var container = $("#containers");
     if (container.children().size() > 0 && container.children(".container").size() === 0 && container.children(".container-fluid").size() === 0) {
         var containerItem = $('<div class="container"></div>');
@@ -20,8 +24,8 @@
         '</div>'].join('');
     var colTools = [
         '<div class="tools">',
-        '<i class="glyphicon glyphicon-menu-left" title="减小宽度 -1"></i>',
-        '<i class="glyphicon glyphicon glyphicon-menu-right" title="增加宽度 +1"></i>',
+        '<i class="glyphicon glyphicon-menu-left" title="宽度 - 1"></i>',
+        '<i class="glyphicon glyphicon glyphicon-menu-right" title="宽度 + 1"></i>',
         '<i class="glyphicon glyphicon-remove-circle" title="删除"></i>',
         '</div>'].join('');
     function getNewZone() {
@@ -34,7 +38,7 @@
         zoneParent.append(zone);
         return zoneParent;
     }
-    $(document).on("click", ".dropdown-menu.col-size a", function () {
+    $(document).on("click", "#toolBar .col-size a", function () {
         $("#add-col-handle").attr("data-val", $(this).data("val")).find(".col-size-info").text($(this).text());
         $(this).parent().parent().find(".active").removeClass("active");
         $(this).parent().addClass("active");
@@ -86,25 +90,28 @@
             row.sortable(colSortOption);
         }
     };
+    function initContainer() {
+        $("#containers").sortable({
+            placeholder: "design",
+            axis: 'y',
+            tolerance: "pointer",
+            start: function (event, ui) {
+                if (ui.helper.hasClass("container")) {
+                    ui.placeholder.addClass("container");
+                    ui.helper.css("left", ui.placeholder.offset().left);
+                }
+                else {
+                    ui.placeholder.addClass("container-fluid");
+                }
+            },
+            handle: ".glyphicon-sort"
+        });
 
-    $("#containers").sortable({
-        placeholder: "design",
-        axis: 'y',
-        tolerance: "pointer",
-        start: function (event, ui) {
-            if (ui.helper.hasClass("container")) {
-                ui.placeholder.addClass("container");
-                ui.helper.css("left", ui.placeholder.offset().left);
-            }
-            else {
-                ui.placeholder.addClass("container-fluid");
-            }
-        },
-        handle: ".glyphicon-sort"
-    });
+        $("#containers>div").sortable(rowSortOption).append(containerTools).addClass("design main custom-style");
+        $(".additional.row").sortable(colSortOption).append(rowTools).children(".additional").append(colTools);
+    }
+    initContainer();
 
-    $("#containers>div").sortable(rowSortOption).append(containerTools).addClass("design main custom-style");
-    $(".additional.row").sortable(colSortOption).append(rowTools).children(".additional").append(colTools);
     $("body").droppable({
         greedy: true,
         accept: ".AddContainer",
@@ -167,6 +174,7 @@
             if (!$.trim($(this).val())) {
                 $(this).val("未命名");
             }
+            $(this).attr("value", $(this).val());
         });
         if ($(this).data("done")) {
             return;
@@ -184,13 +192,13 @@
         var copyContainer = $('<div id="containers"/>').append(container.html());
 
         $("div", copyContainer)
-                    .removeClass("ui-droppable")
-                    .removeClass("ui-sortable")
-                    .removeClass("ui-sortable-handle")
-                    .removeClass("active")
-                    .removeClass("design")
-                    .removeClass("custom-style-target")
-                    .not(".custom-style").removeAttr("style");
+            .removeClass("ui-droppable")
+            .removeClass("ui-sortable")
+            .removeClass("ui-sortable-handle")
+            .removeClass("active")
+            .removeClass("design")
+            .removeClass("custom-style-target")
+            .not(".custom-style").removeAttr("style");
 
         $(".tools", copyContainer).remove();
 
@@ -223,5 +231,58 @@
         }
         form.submit();
         return false;
+    });
+    var editor = null;
+    function formatCode() {
+        setTimeout(function () {
+            editor.getAction('editor.action.formatDocument').run();
+        }, 50);
+    }
+    $(document).on("click", "#show-source-code", function () {
+        $('input[name="ZoneName"]').each(function () {
+            if (!$.trim($(this).val())) {
+                $(this).val("Untitled");
+            }
+            $(this).attr("value", $(this).val());
+        });
+        var copyContainer = $('<div id="containers"/>').append(container.html());
+
+        $("div", copyContainer)
+            .removeClass("ui-droppable")
+            .removeClass("ui-sortable")
+            .removeClass("ui-sortable-handle")
+            .removeClass("active")
+            .removeClass("design")
+            .removeClass("custom-style-target")
+            .not(".custom-style").removeAttr("style");
+
+        $(".tools", copyContainer).remove();
+
+        var html = copyContainer.html()
+            .replace(new RegExp('><div', 'g'), ">\n<div")
+            .replace(new RegExp('></div', 'g'), ">\n</div")
+            .replace(new RegExp('><zone>', 'g'), ">\n<zone>\n")
+            .replace(new RegExp('></zone', 'g'), ">\n</zone")
+            .replace(new RegExp('><input', 'g'), ">\n<input");
+        if (editor == null) {
+            Easy.Block();
+            setTimeout(function () {
+                codeEditor.createToAsync(document.getElementById("layout-code-editor"), html, "html").then(e => {
+                    Easy.UnBlock();
+                    editor = e;
+                    formatCode();
+                });
+            }, 300);
+        } else {
+            editor.setValue(html);
+            formatCode();
+        }
+    });
+    $(document).on("click", "#save-layout-code", function () {
+        var doc = editor.getValue();
+        container.html(doc);
+        $("input[name=LayoutId]", container).val($("#LayoutId").val());
+        initContainer();
+
     });
 });

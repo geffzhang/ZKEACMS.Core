@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.Models;
 using Easy.RepositoryPattern;
 using System;
@@ -8,6 +11,9 @@ using Easy.Constant;
 using Easy.LINQ;
 using System.Linq;
 using System.Linq.Expressions;
+using Easy.Extend;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 
 namespace Easy.Mvc.Controllers
 {
@@ -26,23 +32,12 @@ namespace Easy.Mvc.Controllers
         {
             Service = service;
         }
-        protected void UpLoadImage(IImage entity)
-        {
-            if (entity == null) return;
-            if (!string.IsNullOrEmpty(entity.ImageUrl) && string.IsNullOrEmpty(entity.ImageThumbUrl))
-            {
-                entity.ImageThumbUrl = entity.ImageUrl;
-            }
-            string filePath = Request.SaveImage();
-        }
 
-
-
-        public virtual ActionResult Index()
+        public virtual IActionResult Index()
         {
             return View();
         }
-        public virtual ActionResult Create()
+        public virtual IActionResult Create()
         {
             var entity = Activator.CreateInstance<TEntity>();
             entity.Status = (int)RecordStatus.Active;
@@ -50,49 +45,76 @@ namespace Easy.Mvc.Controllers
         }
 
         [HttpPost]
-        public virtual ActionResult Create(TEntity entity)
+        public virtual IActionResult Create(TEntity entity)
         {
             if (ModelState.IsValid)
             {
-                UpLoadImage(entity as IImage);
-                Service.Add(entity);
-                return RedirectToAction("Index");
+                var result = Service.Add(entity);
+                if (result.HasViolation)
+                {
+                    foreach (var item in result.RuleViolations)
+                    {
+                        ModelState.AddModelError(item.ParameterName, item.ErrorMessage);
+                    }
+                    return View(entity);
+                }
+                if (entity.ActionType.HasFlag(ActionType.Exit))
+                {
+                    return RedirectToAction("Index");
+                }
+                return RedirectToAction("Edit", new { Id = GetPrimaryKeyValue(entity) });
             }
             return View(entity);
         }
-        public virtual ActionResult Edit(TPrimarykey Id)
+        public virtual IActionResult Edit(TPrimarykey Id)
         {
+            if (Id == null)
+            {
+                return NotFound();
+            }
             TEntity entity = Service.Get(Id);
+            if (entity == null)
+            {
+                return NotFound();
+            }
             return View(entity);
         }
 
         [HttpPost]
-        public virtual ActionResult Edit(TEntity entity)
+        public virtual IActionResult Edit(TEntity entity)
         {
-            if (entity.ActionType == ActionType.Delete)
+            if (entity.ActionType.HasFlag(ActionType.Delete))
             {
                 Service.Remove(entity);
                 return RedirectToAction("Index");
             }
 
-            ViewBag.Title = entity.Title;
             if (ModelState.IsValid)
             {
-                UpLoadImage(entity as IImage);
-                Service.Update(entity);
-                return RedirectToAction("Index");
+                var result = Service.Update(entity);
+                if (result.HasViolation)
+                {
+                    foreach (var item in result.RuleViolations)
+                    {
+                        ModelState.AddModelError(item.ParameterName, item.ErrorMessage);
+                    }
+                    return View(entity);
+                }
+                if (entity.ActionType.HasFlag(ActionType.Exit))
+                {
+                    return RedirectToAction("Index");
+                }
+                return RedirectToAction("Edit", new { Id = GetPrimaryKeyValue(entity) });
             }
             return View(entity);
         }
 
         [HttpPost]
-        public virtual JsonResult Delete(TPrimarykey id)
+        public virtual IActionResult Delete(TPrimarykey id)
         {
             try
             {
-
                 Service.Remove(id);
-
                 return Json(new AjaxResult { Status = AjaxStatus.Normal });
             }
             catch (Exception ex)
@@ -101,7 +123,7 @@ namespace Easy.Mvc.Controllers
             }
         }
         [HttpPost]
-        public virtual JsonResult GetList(DataTableOption query)
+        public virtual IActionResult GetList(DataTableOption query)
         {
             var pagin = new Pagination { PageSize = query.Length, PageIndex = query.Start / query.Length };
             var expression = query.AsExpression<TEntity>();
@@ -124,6 +146,19 @@ namespace Easy.Mvc.Controllers
         {
             Service.Dispose();
             base.Dispose(disposing);
+        }
+
+        private TPrimarykey GetPrimaryKeyValue(TEntity entity)
+        {
+            var myClassType = entity.GetType();
+            foreach (var propertyInfo in myClassType.GetProperties())
+            {
+                var keyAttribute = propertyInfo.GetCustomAttribute<KeyAttribute>();
+                if (keyAttribute == null) continue;
+
+                return (TPrimarykey)propertyInfo.GetValue(entity);
+            }
+            return default;
         }
     }
 }

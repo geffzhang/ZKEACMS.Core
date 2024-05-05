@@ -1,4 +1,8 @@
-﻿using Easy.LINQ;
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Easy.LINQ;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +10,7 @@ using System.Threading.Tasks;
 using System.Linq.Expressions;
 using Easy.Extend;
 using System.Reflection;
+using Easy.Reflection;
 
 namespace Easy.Mvc.Controllers
 {
@@ -43,14 +48,14 @@ namespace Easy.Mvc.Controllers
                 query.Name = p.Name;
                 try
                 {
-                    query.Value = Easy.Reflection.ClassAction.ValueConvert(p, value);
-                    query.ValueMin = Easy.Reflection.ClassAction.ValueConvert(p, item.Search.ValueMin);
-                    query.ValueMax = Easy.Reflection.ClassAction.ValueConvert(p, item.Search.ValueMax);
+                    query.Value = ValueConverter.Convert(value, p.PropertyType);
+                    query.ValueMin = ValueConverter.Convert(item.Search.ValueMin, p.PropertyType);
+                    query.ValueMax = ValueConverter.Convert(item.Search.ValueMax, p.PropertyType);
 
-                    if(query.ValueMax!=null && query.ValueMax is DateTime)
-                    {
-                        query.ValueMax = ((DateTime)query.ValueMax).AddDays(1).AddMilliseconds(-1);
-                    }
+                    //if (query.ValueMax != null && query.ValueMax is DateTime)
+                    //{
+                    //    query.ValueMax = ((DateTime)query.ValueMax).AddDays(1).AddMilliseconds(-1);
+                    //}
                 }
                 catch
                 {
@@ -83,6 +88,24 @@ namespace Easy.Mvc.Controllers
                 return false;
             }
             return Order[0].Dir.Equals("desc", StringComparison.OrdinalIgnoreCase);
+        }
+        public void AppendCondition(string property, string value, Query.Operators operators = Query.Operators.Equal)
+        {
+            property = property.ToCamelCaseNaming();
+            foreach (var item in Columns)
+            {
+                if (item.Data == property)
+                {
+                    item.SearchAble = true;
+                    item.Search = new SearchOption { Opeartor = operators, Value = value };
+                    return;
+                }
+            }
+            Columns = Columns.Concat(new ColumnOption[]
+            {
+                new ColumnOption { Data = property, SearchAble = true, Search = new SearchOption { Opeartor = operators, Value = value } }
+            }).ToArray();
+
         }
     }
     public class ColumnOption

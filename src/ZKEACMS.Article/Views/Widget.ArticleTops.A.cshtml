@@ -1,0 +1,19 @@
+﻿@model ZKEACMS.Article.ViewModel.ArticleTopWidgetViewModel
+@using (Html.BeginPanel(Model.Widget.Title, Model.Widget.MoreLink.IsNullOrEmpty() ? string.Empty : Url.Content(Model.Widget.MoreLink), L("More...").Text))
+{
+    <div class="article-tops A">
+        <ul>
+            @if (Model.Articles != null)
+            {
+                foreach (var item in Model.Articles)
+                {
+                    <li>
+                        <a href="@Url.PostUrl(Model.Widget.DetailPageUrl, item)" target="_blank">
+                            @item.Title
+                        </a>
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+}

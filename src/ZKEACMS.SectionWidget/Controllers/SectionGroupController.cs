@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy;
 using Easy.Constant;
 using Easy.Extend;
@@ -7,6 +10,7 @@ using Easy.Mvc.Authorize;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using ZKEACMS.PackageManger;
 using ZKEACMS.SectionWidget.Models;
 using ZKEACMS.SectionWidget.Service;
@@ -22,10 +26,11 @@ namespace ZKEACMS.SectionWidget.Controllers
         private readonly IWidgetBasePartService _widgetService;
         private readonly IPackageInstallerProvider _packageInstallerProvider;
         private readonly IWidgetActivator _widgetActivator;
-
+        private readonly ILocalize _localize;
         public SectionGroupController(ISectionGroupService sectionGroupService,
             ISectionContentProviderService sectionContentProviderService,
             IWidgetBasePartService widgetService, IPackageInstallerProvider packageInstallerProvider,
+            ILocalize localize,
             IWidgetActivator widgetActivator)
         {
             _sectionGroupService = sectionGroupService;
@@ -33,6 +38,7 @@ namespace ZKEACMS.SectionWidget.Controllers
             _widgetService = widgetService;
             _packageInstallerProvider = packageInstallerProvider;
             _widgetActivator = widgetActivator;
+            _localize = localize;
         }
 
         public ActionResult Create(string sectionWidgetId)
@@ -44,7 +50,7 @@ namespace ZKEACMS.SectionWidget.Controllers
                 ActionType = ActionType.Create,
                 Order = order,
                 PartialView = "SectionTemplate.Default",
-                GroupName = "组 " + order
+                GroupName = _localize.Get("Group") + " " + order
             });
         }
         public ActionResult Edit(string Id)
@@ -60,7 +66,7 @@ namespace ZKEACMS.SectionWidget.Controllers
             {
                 return View("Form", group);
             }
-            if (group.ActionType == ActionType.Create)
+            if (group.ActionType.HasFlag(ActionType.Create))
             {
                 _sectionGroupService.Add(group);
             }
@@ -105,17 +111,20 @@ namespace ZKEACMS.SectionWidget.Controllers
             {
                 try
                 {
-                    WidgetPackage package;
-                    _packageInstallerProvider.CreateInstaller(Request.Form.Files[0].OpenReadStream(), out package);
-                    _widgetActivator.Create(package.Widget).InstallWidget(package);
+                    using(Stream stream = Request.Form.Files[0].OpenReadStream())
+                    {
+                        Package package;
+                        var installer = _packageInstallerProvider.CreateInstaller(stream, out package);
+                        installer.Install(package);
+                    }                    
                 }
                 catch (Exception ex)
                 {
-                    return Json(new AjaxResult { Status = AjaxStatus.Error, Message = "上传的模板不正确!" + ex.Message });
+                    return Json(new AjaxResult { Status = AjaxStatus.Error, Message = ex.Message });
                 }
             }
 
-            return Json(new AjaxResult { Status = AjaxStatus.Normal, Message = "上传成功" });
+            return Json(new AjaxResult { Status = AjaxStatus.Normal, Message = _localize.Get("Upload success") });
         }
 
         [HttpPost]

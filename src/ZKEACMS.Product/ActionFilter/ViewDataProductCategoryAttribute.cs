@@ -1,15 +1,18 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 using Easy.Mvc.Attribute;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 using ZKEACMS.Product.Service;
 
 namespace ZKEACMS.Product.ActionFilter
 {
-    public class ViewDataProductCategoryAttribute : ViewDataAttribute
+    public class ViewDataProductCategoryAttribute : Easy.Mvc.Attribute.ViewDataAttribute
     {
 
         public override void OnActionExecuted(ActionExecutedContext filterContext)
@@ -21,7 +24,7 @@ namespace ZKEACMS.Product.ActionFilter
         {
             var productCategoryService = filterContext.HttpContext.RequestServices.GetService<IProductCategoryService>();
             (filterContext.Controller as Controller) .ViewData[ViewDataKeys.ProductCategory] = 
-                new SelectList(productCategoryService.Get(), "ID", "Title");
+                new SelectList(productCategoryService.Get().ToList(), "ID", "Title");
         }
     }
 }

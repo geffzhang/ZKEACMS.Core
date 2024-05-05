@@ -1,32 +1,31 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using ZKEACMS.SectionWidget.Models;
 using Easy.RepositoryPattern;
 using Easy;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 
 namespace ZKEACMS.SectionWidget.Service
 {
-    public class SectionContentVideoService : ServiceBase<SectionContentVideo, SectionDbContext>, ISectionContentService
+    public class SectionContentVideoService : ServiceBase<SectionContentVideo, CMSDbContext>, ISectionContentService
     {
-        public SectionContentVideoService(IApplicationContext applicationContext) : base(applicationContext)
+        public SectionContentVideoService(IApplicationContext applicationContext, CMSDbContext dbContext) : base(applicationContext, dbContext)
         {
-        }
-
-        public override DbSet<SectionContentVideo> CurrentDbSet
-        {
-            get
-            {
-                return DbContext.SectionContentVideo;
-            }
-        }
+        }     
 
         public SectionContentBase.Types ContentType
         {
             get { return SectionContentBase.Types.Video; }
         }
 
-
+        public override IQueryable<SectionContentVideo> Get()
+        {
+            return CurrentDbSet.AsNoTracking();
+        }
 
         public void AddContent(SectionContent content)
         {

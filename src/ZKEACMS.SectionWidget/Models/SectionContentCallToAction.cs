@@ -1,16 +1,21 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy.MetaData;
 using System.ComponentModel.DataAnnotations.Schema;
 using ZKEACMS.Extend;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.SectionWidget.Models
 {
-    [ViewConfigure(typeof(SectionContentCallToActionMetaData)), Table("SectionContentCallToAction")]
+    [DataTable("SectionContentCallToAction")]
     public class SectionContentCallToAction : SectionContentBasic
     {
         public string InnerText { get; set; }
         public string Href { get; set; }
+        [NotMapped]
         public override int SectionContentType
         {
             get

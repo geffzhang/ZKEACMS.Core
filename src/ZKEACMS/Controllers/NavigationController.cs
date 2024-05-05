@@ -1,4 +1,8 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Easy;
 using Easy.Mvc.Attribute;
 using Easy.Mvc.Authorize;
 using Easy.Mvc.Controllers;
@@ -11,21 +15,23 @@ using ZKEACMS.Common.Service;
 
 namespace ZKEACMS.Controllers
 {
-    [DefaultAuthorize]
+    [DefaultAuthorize(Policy = PermissionKeys.ViewNavigation)]
     public class NavigationController : BasicController<NavigationEntity, string, INavigationService>
     {
-        public NavigationController(INavigationService service)
+        private readonly ILocalize _localize;
+        public NavigationController(INavigationService service,
+            ILocalize localize)
             : base(service)
         {
-
+            _localize = localize;
         }
         [NonAction]
-        public override ActionResult Create()
+        public override IActionResult Create()
         {
             return base.Create();
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageNavigation)]
-        public ActionResult Create(string ParentID)
+        public IActionResult Create(string ParentID)
         {
             var navication = new NavigationEntity
             {
@@ -35,32 +41,32 @@ namespace ZKEACMS.Controllers
             return View(navication);
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageNavigation)]
-        public override ActionResult Create(NavigationEntity entity)
+        public override IActionResult Create(NavigationEntity entity)
         {
             return base.Create(entity);
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageNavigation)]
-        public override ActionResult Edit(string Id)
+        public override IActionResult Edit(string Id)
         {
             return base.Edit(Id);
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageNavigation)]
-        public override ActionResult Edit(NavigationEntity entity)
+        public override IActionResult Edit(NavigationEntity entity)
         {
             return base.Edit(entity);
         }
         public JsonResult GetNavTree()
         {
-            var navs = Service.Get().OrderBy(m => m.DisplayOrder);
+            var navs = Service.Get().OrderBy(m => m.DisplayOrder).ToList();
             var node = new Tree<NavigationEntity>().Source(navs).ToNode(m => m.ID, m => m.Title, m => m.ParentId, "#");
             return Json(node);
         }
 
         public JsonResult GetSelectNavTree()
         {
-            var navs = Service.Get().OrderBy(m => m.DisplayOrder);
+            var navs = Service.Get().OrderBy(m => m.DisplayOrder).ToList();
             var node = new Tree<NavigationEntity>().Source(navs).ToNode(m => m.ID, m => m.Title, m => m.ParentId, "#");
-            Node root = new Node { id = "root", text = "µ¼º½", children = node, state = new State { opened = true }, a_attr = new { id = "root" } };
+            Node root = new Node { id = "root", text = _localize.Get("Navigation"), children = node, state = new State { opened = true }, a_attr = new { id = "root" } };
             return Json(root);
         }
 
@@ -70,7 +76,7 @@ namespace ZKEACMS.Controllers
             Service.Move(id, parentId, position, oldPosition);
             return Json(true);
         }
-        public ActionResult Select(string selected)
+        public IActionResult Select(string selected)
         {
             ViewBag.Selected = selected;
             return View();

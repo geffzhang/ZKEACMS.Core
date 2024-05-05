@@ -1,4 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 namespace Easy.Constant
 {
@@ -7,7 +9,7 @@ namespace Easy.Constant
         /// <summary>
         /// 邮件
         /// </summary>
-        public const string Email = @"\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*";
+        public const string Email = @"^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$";
         /// <summary>
         /// 网址
         /// </summary>
@@ -28,6 +30,10 @@ namespace Easy.Constant
         /// 固定电话
         /// </summary>
         public const string ChinesePhone = @"\d{3}-\d{8}|\d{4}-\d{7}";
+        /// <summary>
+        /// 手机号
+        /// </summary>
+        public const string ChineseMobile = @"^1[34578]\d{9}$";
         /// <summary>
         /// 邮政编码
         /// </summary>
@@ -51,35 +57,19 @@ namespace Easy.Constant
         /// <summary>
         ///匹配整数
         /// </summary>
-        public const string Integer = @"^-?[1-9]\d*|0$";
+        public const string Integer = @"^-?[0-9]+$";
         /// <summary>
         /// 匹配非负整数（正整数 + 0）
         /// </summary>
-        public const string PositiveIntegersAndZero = @"^[1-9]\d*|0$";
+        public const string PositiveIntegersAndZero = @"^[0-9]+$";
         /// <summary>
         /// 匹配非正整数（负整数 + 0）
         /// </summary>
-        public const string NegativeIntegersAndZero = @"^-[1-9]\d*|0$";
+        public const string NegativeIntegersAndZero = @"^-[0-9]+$";
         /// <summary>
         /// 匹配正浮点数
         /// </summary>
-        public const string PositiveFloat = @"^[1-9]\d*\.\d*|0\.\d*[1-9]\d*$";
-        /// <summary>
-        /// 匹配负浮点数
-        /// </summary>
-        public const string NegativeFloat = @"^-([1-9]\d*\.\d*|0\.\d*[1-9]\d*)$";
-        /// <summary>
-        /// 匹配浮点数
-        /// </summary>
-        public const string Float = @"^-?([0-9]\d*|[1-9]\d*\.\d*|0\.\d*[1-9]\d*|0?\.0+|0)$";
-        /// <summary>
-        /// 匹配非负浮点数（正浮点数 + 0）
-        /// </summary>
-        public const string PositiveFloatAndZero = @"^[1-9]\d*\.\d*|0\.\d*[1-9]\d*|0?\.0+|0$";
-        /// <summary>
-        /// 匹配非正浮点数（负浮点数 + 0）
-        /// </summary>
-        public const string NegativeFloatAndZero = @"^(-([1-9]\d*\.\d*|0\.\d*[1-9]\d*))|0?\.0+|0$";
+        public const string Float = @"^(\-|\+)?\d+(\.\d+)?$";
         /// <summary>
         /// 匹配由26个英文字母组成的字符串
         /// </summary>
@@ -97,7 +87,11 @@ namespace Easy.Constant
         /// </summary>
         public const string LettersAndNumber = @"^[A-Za-z0-9]+$";
         /// <summary>
-        /// 匹配由数字、26个英文字母或者下划线组成的字符串
+        /// 匹配包括下划线中划线的任何单词字符
+        /// </summary>
+        public const string LetterNumberOrLine = @"^[A-Za-z0-9_-]+$";
+        /// <summary>
+        /// 匹配包括下划线的任何单词字符
         /// </summary>
         public const string LettersAndNumberAndLine = @"^\w+$";
     }

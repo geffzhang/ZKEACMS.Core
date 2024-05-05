@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.Extend;
 
 namespace Easy.ViewPort.Validator
@@ -7,7 +10,7 @@ namespace Easy.ViewPort.Validator
     {
         public RequiredValidator()
         {
-            this.BaseErrorMessage = "请输入{0}";
+            BaseErrorMessage = "{0} is required";
         }
         public override bool Validate(object value)
         {

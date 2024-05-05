@@ -1,123 +1,141 @@
-﻿@model DesignWidgetViewModel
+@using Microsoft.Extensions.Options
+@model DesignWidgetViewModel
 @{
     var toggleClasssAction = Url.Action("ToggleClass", "Widget", new { Model.Widget.ID });
+
+    var dataSourceSetting = ViewContext.HttpContext.RequestServices.GetService(typeof(IOptions<>).MakeGenericType(Model.Widget.GetType())) as IOptions<WidgetBase>;
+    if (dataSourceSetting != null)
+    {
+        Model.Widget.DataSourceLink = dataSourceSetting.Value.DataSourceLink;
+        Model.Widget.DataSourceLinkTitle = dataSourceSetting.Value.DataSourceLinkTitle;
+    }
+    else
+    {
+        Model.Widget.DataSourceLink = string.Empty;
+        Model.Widget.DataSourceLinkTitle = string.Empty;
+    }
 }
 <div style="@Model.Widget.CustomStyle">
     <div class="widget widget-design @Model.Widget.CustomClass"
          id="widget_@Model.Widget.ID"
          data-widgetid="@Model.Widget.ID">
-        <div class="zoneToolbar @(Model.Widget.LayoutID.IsNullOrEmpty() ? "blue" : "green")">
+        <div class="zoneToolbar @(Model.Widget.LayoutId.IsNullOrEmpty() ? "blue" : "green") @(Model.Widget.RuleID.HasValue ? "orange" : "")" title="@(Model.Widget.WidgetName)">
             <div class="tools">
-                @if (Model.Widget.LayoutID.IsNotNullAndWhiteSpace())
+                @if (Model.Widget.LayoutId.IsNotNullAndWhiteSpace())
                 {
-                    <span class="badge">布局</span>
+                    <a class="badge" href="@Url.Action("LayoutWidget","Layout",new{ layoutId = Model.Widget.LayoutId })">@L("Layout")</a>
                 }
-                <i class="glyphicon glyphicon-move sort-handle" title="拖动">
-                    <span>拖动</span>
+                @if (Model.Widget.RuleID.HasValue)
+                {
+                    <a class="badge" href="@Url.Action("Edit","Rule",new { ID = Model.Widget.RuleID })">@L("Rule")</a>
+                }
+                <i class="glyphicon glyphicon-move sort-handle" title="@L("Drag")">
+                    <span>@L("Drag")</span>
                 </i>
-                <a href="@Url.Action("Edit", "Widget", new { Model.Widget.ID, ReturnUrl = Url.Action("Design", "Page", new {ID = Model.PageID})})"
-                   class="glyphicon glyphicon-edit"
-                   title="编辑">
-                    <span>编辑</span>
+                <a href="@Url.Action("Edit", "Widget", new { Model.Widget.ID, ReturnUrl = Url.Action("Design", "Page", new { ID = Model.PageId })})"
+                   class="glyphicon glyphicon-wrench"
+                   title="@L("Widget Setting")">
+                    <span>@L("Widget Setting")</span>
                 </a>
+                @if (Model.Widget.DataSourceLink.IsNotNullAndWhiteSpace())
+                {
+                    <a href="@Url.PathContent(Model.Widget.DataSourceLink)"
+                       target="_blank"
+                       class="toggle-hidden hidden glyphicon glyphicon-pencil"
+                       title="@L("Edit Content")@L(Model.Widget.DataSourceLinkTitle)">
+                        <span>@L("Edit Content") @L(Model.Widget.DataSourceLinkTitle)</span>
+                    </a>
+                }
                 <a href="javascript:void(0)"
                    data-action="@Url.Action("Copy", "Widget", new { widgetId = Model.Widget.ID })"
-                   data-class="container"
-                   title="复制"
+                   title="@L("Copy")"
                    class="glyphicon glyphicon-copy copy-widget">
-                    <span>复制</span>
+                    <span>@L("Copy")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="container"
-                   title="切换容器"
+                   title="@L("Toggle Container")"
                    class="glyphicon glyphicon-transfer transfer-container toggle-widget-class">
-                    <span>切换容器</span>
+                    <span>@L("Toggle Container")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="full"
-                   title="减小外边距"
+                   title="@L("Reduce Margin")"
                    class="glyphicon glyphicon-fullscreen toggle-widget-class">
-                    <span>减小外边距</span>
+                    <span>@L("Reduce Margin")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="full"
-                   title="增加边距"
+                   title="@L("Add Margin")"
                    class="glyphicon glyphicon-th-large toggle-widget-class">
-                    <span>增加边距</span>
+                    <span>@L("Add Margin")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="align-center"
-                   title="居中"
-                   class="glyphicon glyphicon-align-center toggle-widget-class">
-                    <span>居中</span>
+                   title="@L("Center")"
+                   class="toggle-hidden hidden glyphicon glyphicon-align-center toggle-widget-class">
+                    <span>@L("Center")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="align-right"
-                   title="右对齐"
-                   class="glyphicon glyphicon-align-right toggle-widget-class">
-                    <span>右对齐</span>
+                   title="@L("Aligh Right")"
+                   class="toggle-hidden hidden glyphicon glyphicon-align-right toggle-widget-class">
+                    <span>@L("Aligh Right")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="border"
-                   title="外边框"
-                   class="glyphicon glyphicon-unchecked toggle-widget-class">
-                    <span>外边框</span>
+                   title="@L("Border")"
+                   class="toggle-hidden hidden glyphicon glyphicon-unchecked toggle-widget-class">
+                    <span>@L("Border")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="image-border"
-                   title="图片边框"
-                   class="glyphicon glyphicon-picture toggle-widget-class">
-                    <span>图片边框</span>
+                   title="@L("Image Border")"
+                   class="toggle-hidden hidden glyphicon glyphicon-picture toggle-widget-class">
+                    <span>@L("Image Border")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="image-circle"
-                   title="图片圆角"
-                   class="glyphicon glyphicon-adjust toggle-widget-class">
-                    <span>图片圆角</span>
+                   title="@L("Image Radius")"
+                   class="toggle-hidden hidden glyphicon glyphicon-adjust toggle-widget-class">
+                    <span>@L("Image Radius")</span>
                 </a>
                 <a href="javascript:void(0)"
                    data-action="@toggleClasssAction"
                    data-class="box-shadow"
-                   title="阴影"
-                   class="glyphicon glyphicon-tags toggle-widget-class">
-                    <span>阴影</span>
+                   title="@L("Shadow")"
+                   class="toggle-hidden hidden glyphicon glyphicon-tags toggle-widget-class">
+                    <span>@L("Shadow")</span>
                 </a>
-                <a href="javascript:void(0)" data-action="@Url.Action("SaveCustomStyle", "Widget", new {Model.Widget.ID})" 
-                   title="自定义样式(设置背景图片等)" class="glyphicon glyphicon-erase custom-style-editor">
-                    <span>自定义样式</span>
+                <a href="javascript:void(0)" data-action="@Url.Action("SaveCustomStyle", "Widget", new {Model.Widget.ID})"
+                   title="@L("Style")" class="glyphicon glyphicon-cog custom-style-editor">
+                    <span>@L("Style")</span>
                 </a>
-                <a href="javascript:void(0)" class="delete glyphicon glyphicon-trash" title="删除"
+                <a href="javascript:void(0)" class="toggle-hidden hidden delete glyphicon glyphicon-trash" title="@L("Delete")"
                    data-url="@Url.Action("DeleteWidget", "Widget")"
                    data-id="@Model.Widget.ID">
-                    <span>确定删除?</span>
+                    <span>@L("Delete?")</span>
                 </a>
-                <span class="text-muted">|</span>
-                <span>@Model.Widget.WidgetName</span>
-                
+                <span class="toggle-hidden hidden glyphicon glyphicon-info-sign">
+                    <span>{@(Model.Widget.PartialView)}</span>
+                </span>
+                <a href="javascript:void(0)" class="toggle-hidden more glyphicon glyphicon-chevron-right">
+                    <span>@L("More")</span>
+                </a>
+                <a href="javascript:void(0)" class="toggle-hidden hidden more glyphicon glyphicon-chevron-left">
+                    <span>@L("Collapse")</span>
+                </a>
             </div>
         </div>
-        @if (Model.Widget.Title.IsNotNullAndWhiteSpace())
-        {
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    @Model.Widget.Title
-                </div>
-                <div class="panel-body">
-                    @Html.DisPlayWidget(Model)
-                </div>
-            </div>
-        }
-        else
-        {
-            @Html.DisPlayWidget(Model)
-        }
+        
+        @await Html.DisplayWidgetPart(Model)
     </div>
 </div>

@@ -1,8 +1,6 @@
-/*!
- * http://www.zkea.net/
- * Copyright 2017 ZKEASOFT
- * http://www.zkea.net/licenses
- */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 using Easy.Constant;
 using Easy.Mvc.Authorize;
@@ -25,37 +23,37 @@ namespace ZKEACMS.Article.Controllers
             _authorizer = authorizer;
         }
         [DefaultAuthorize(Policy = PermissionKeys.ViewArticle)]
-        public override ActionResult Index()
+        public override IActionResult Index()
         {
             return base.Index();
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageArticle)]
-        public override ActionResult Create()
+        public override IActionResult Create()
         {
             return base.Create();
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageArticle)]
-        public override ActionResult Create(ArticleEntity entity)
+        public override IActionResult Create(ArticleEntity entity)
         {
-            var result = base.Create(entity);
-            if (entity.ActionType == ActionType.Publish)
+            if (entity.ActionType.HasFlag(ActionType.Publish) && _authorizer.Authorize(PermissionKeys.PublishArticle))
             {
-                Service.Publish(entity.ID);
+                Service.Publish(entity);
             }
+            var result = base.Create(entity);
             return result;
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageArticle)]
-        public override ActionResult Edit(int Id)
+        public override IActionResult Edit(int Id)
         {
             return base.Edit(Id);
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ManageArticle)]
-        public override ActionResult Edit(ArticleEntity entity)
+        public override IActionResult Edit(ArticleEntity entity)
         {
             var result = base.Edit(entity);
-            if (entity.ActionType == ActionType.Publish && _authorizer.Authorize(PermissionKeys.PublishArticle))
+            if (entity.ActionType.HasFlag(ActionType.Publish) && _authorizer.Authorize(PermissionKeys.PublishArticle))
             {
-                Service.Publish(entity.ID);
+                Service.Publish(entity);
             }
             if (Request.Query["ReturnUrl"].Count > 0)
             {
@@ -64,14 +62,19 @@ namespace ZKEACMS.Article.Controllers
             return result;
         }
         [HttpPost, DefaultAuthorize(Policy = PermissionKeys.ViewArticle)]
-        public override JsonResult GetList(DataTableOption query)
+        public override IActionResult GetList(DataTableOption query)
         {
             return base.GetList(query);
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageArticle)]
-        public override JsonResult Delete(int id)
+        public override IActionResult Delete(int id)
         {
             return base.Delete(id);
+        }
+        [DefaultAuthorize(Policy = PermissionKeys.ViewArticle)]
+        public IActionResult Select()
+        {
+            return View();
         }
     }
 }

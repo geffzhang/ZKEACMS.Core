@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.Mvc.Resource;
 using Easy.Mvc.Route;
 using System;
@@ -6,6 +9,16 @@ using System.Collections.Generic;
 using ZKEACMS.Common.Models;
 using Microsoft.Extensions.DependencyInjection;
 using ZKEACMS.Article.Service;
+using ZKEACMS.Setting;
+using Easy;
+using ZKEACMS.Article.Models;
+using Microsoft.Extensions.Options;
+using ZKEACMS.WidgetTemplate;
+using Easy.RepositoryPattern;
+using ZKEACMS.Route;
+using System.Collections.Concurrent;
+using ZKEACMS.Article.EventHandler;
+using ZKEACMS.Sitemap.Service;
 
 namespace ZKEACMS.Article
 {
@@ -20,22 +33,29 @@ namespace ZKEACMS.Article
         {
             yield return new AdminMenu
             {
-                Title = "文章管理",
+                Title = "Article Manager",
                 Icon = "glyphicon-font",
                 Order = 10,
                 Children = new List<AdminMenu>
                 {
                     new AdminMenu
                     {
-                        Title = "文章列表",
-                        Url = "~/admin/Article",
+                        Title = "Article List",
+                        Url = "~/admin/article",
                         Icon = "glyphicon-align-justify",
                         PermissionKey = PermissionKeys.ViewArticle
                     },
                     new AdminMenu
                     {
-                        Title = "文章类别",
-                        Url = "~/admin/ArticleType",
+                        Title = "Article Gallery",
+                        Url = "~/admin/articlegallery",
+                        Icon = "glyphicon-th",
+                        PermissionKey = PermissionKeys.ViewArticle
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Article Category",
+                        Url = "~/admin/articletype",
                         Icon = "glyphicon-th-list",
                         PermissionKey = PermissionKeys.ViewArticleType
                     }
@@ -55,26 +75,120 @@ namespace ZKEACMS.Article
 
         public override IEnumerable<PermissionDescriptor> RegistPermission()
         {
-            yield return new PermissionDescriptor(PermissionKeys.ViewArticle, "文章", "查看文章", "");
-            yield return new PermissionDescriptor(PermissionKeys.ManageArticle, "文章", "管理文章", "");
-            yield return new PermissionDescriptor(PermissionKeys.PublishArticle, "文章", "发布文章", "");
-            yield return new PermissionDescriptor(PermissionKeys.ViewArticleType, "文章", "查看文章类别", "");
-            yield return new PermissionDescriptor(PermissionKeys.ManageArticleType, "文章", "管理文章类别", "");
+            yield return new PermissionDescriptor(PermissionKeys.ViewArticle, "Article", "View Article", "");
+            yield return new PermissionDescriptor(PermissionKeys.ManageArticle, "Article", "Manage Article", "");
+            yield return new PermissionDescriptor(PermissionKeys.PublishArticle, "Article", "Publish Article", "");
+            yield return new PermissionDescriptor(PermissionKeys.ViewArticleType, "Article", "View Article Category", "");
+            yield return new PermissionDescriptor(PermissionKeys.ManageArticleType, "Article", "Manage Article Category", "");
         }
 
-        public override IEnumerable<Type> WidgetServiceTypes()
+        public override IEnumerable<WidgetTemplateEntity> WidgetServiceTypes()
         {
-            yield return typeof(ArticleDetailWidgetService);
-            yield return typeof(ArticleListWidgetService);
-            yield return typeof(ArticleSummaryWidgetService);
-            yield return typeof(ArticleTopWidgetService);
-            yield return typeof(ArticleTypeWidgetService);
+            string groupName = "2.Article";
+            yield return new WidgetTemplateEntity<ArticleListWidgetService>
+            {
+                Title = "Article List",
+                GroupName = groupName,
+                PartialView = "Widget.ArticleList",
+                Thumbnail = "~/Plugins/ZKEACMS.Article/Content/Image/Widget.ArticleList.png",
+                Order = 1
+            };
+            yield return new WidgetTemplateEntity<ArticleDetailWidgetService>
+            {
+                Title = "Article Detail",
+                GroupName = groupName,
+                PartialView = "Widget.ArticleDetail",
+                Thumbnail = "~/Plugins/ZKEACMS.Article/Content/Image/Widget.ArticleDetail.png",
+                Order = 2
+            };
+
+            //add by roc
+            yield return new WidgetTemplateEntity<ArticleSpecialDetailWidgetService>
+            {
+                Title = "Specify Article Detail",
+                GroupName = groupName,
+                PartialView = "Widget.ArticleDetail",
+                Thumbnail = "~/Plugins/ZKEACMS.Article/Content/Image/Widget.ArticleDetail.png",
+                Order = 2
+            };
+
+            yield return new WidgetTemplateEntity<ArticleTopWidgetService>
+            {
+                Title = "Latest Article",
+                GroupName = groupName,
+                PartialView = "Widget.ArticleTops",
+                Thumbnail = "~/Plugins/ZKEACMS.Article/Content/Image/Widget.ArticleTops.png",
+                Order = 3
+            };
+            yield return new WidgetTemplateEntity<ArticleSummaryWidgetService>
+            {
+                Title = "Article Summary",
+                GroupName = groupName,
+                PartialView = "Widget.ArticleSummary",
+                Thumbnail = "~/Plugins/ZKEACMS.Article/Content/Image/Widget.ArticleSummary.png",
+                Order = 4
+            };
+            yield return new WidgetTemplateEntity<ArticleTypeWidgetService>
+            {
+                Title = "Article Category",
+                GroupName = groupName,
+                PartialView = "Widget.ArticleType",
+                Thumbnail = "~/Plugins/ZKEACMS.Article/Content/Image/Widget.ArticleType.png",
+                Order = 5
+            }; ;
+            yield return new WidgetTemplateEntity<ArticleGalleryWidgetService>
+            {
+                Title = "Article Gallery",
+                GroupName = groupName,
+                PartialView = "Widget.ArticleGallery",
+                Thumbnail = "~/Plugins/ZKEACMS.Article/Content/Image/Widget.ArticleGallery.png",
+                Order = 6
+            };
         }
 
         public override void ConfigureServices(IServiceCollection serviceCollection)
         {
             serviceCollection.AddTransient<IArticleService, ArticleService>();
+            serviceCollection.AddTransient<IArticleGalleryService, ArticleGalleryService>();
+            serviceCollection.AddTransient<IArticleApiService, ArticleApiService>();
             serviceCollection.AddTransient<IArticleTypeService, ArticleTypeService>();
+            serviceCollection.AddTransient<IArticleTypeApiService, ArticleTypeApiService>();
+            serviceCollection.AddTransient<IRouteDataProvider, ArticleRouteDataProvider>();
+            serviceCollection.AddTransient<IRouteDataProvider, ArticleTypeRouteDataProvider>();
+            serviceCollection.AddSingleton<IOnModelCreating, EntityFrameWorkModelCreating>();
+            serviceCollection.AddTransient<IArticleUrlService, ArticleUrlService>();
+
+            serviceCollection.AddTransient<IArticleListWidgetDataService, ArticleListWidgetDataService>();
+            serviceCollection.AddTransient<IArticleGalleryWidgetDataService, ArticleGalleryWidgetDataService>();
+            serviceCollection.AddTransient<IArticleSummaryWidgetDataService, ArticleSummaryWidgetDataService>();
+            serviceCollection.AddTransient<IArticleTopWidgetDataService, ArticleTopWidgetDataService>();
+            serviceCollection.AddTransient<ISiteUrlProvider, ArticlePageSiteUrlProvider>();
+            serviceCollection.AddTransient<IBlockUrlService, ArticleBlockUrlService>();
+
+            serviceCollection.RegistEvent<UpdateDetailPageUrlOnPageUrlChangedEventHandler>(Event.Events.OnPageUrlChanged);
+
+            serviceCollection.Configure<ArticleListWidget>(option =>
+            {
+                option.DataSourceLinkTitle = "Article";
+                option.DataSourceLink = "~/admin/article";
+            });
+            serviceCollection.Configure<ArticleTopWidget>(option =>
+            {
+                option.DataSourceLinkTitle = "Article";
+                option.DataSourceLink = "~/admin/article";
+            });
+            serviceCollection.Configure<ArticleTypeWidget>(option =>
+            {
+                option.DataSourceLinkTitle = "Article Category";
+                option.DataSourceLink = "~/admin/articletype";
+            });
+            serviceCollection.ConfigureMetaData<ArticleDetailWidget, ArticleDetailWidgetMetaData>();
+            serviceCollection.ConfigureMetaData<ArticleListWidget, ArticleListWidgetMeta>();
+            serviceCollection.ConfigureMetaData<ArticleSummaryWidget, ArticleSummaryWidgetMetaData>();
+            serviceCollection.ConfigureMetaData<ArticleTopWidget, ArticleTopWidgetMetaData>();
+            serviceCollection.ConfigureMetaData<ArticleTypeWidget, ArticleTypeWidgetMetaData>();
+            serviceCollection.ConfigureMetaData<ArticleSpecialDetailWidget, ArticleSpecialDetailWidgetMetaData>();
+            serviceCollection.ConfigureMetaData<ArticleGalleryWidget, ArticleGalleryWidgetMetaData>();
         }
     }
 }

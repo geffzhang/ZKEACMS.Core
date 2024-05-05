@@ -1,19 +1,23 @@
-﻿@model ZKEACMS.Redirection.Models.UrlRedirect
+@model ZKEACMS.Redirection.Models.UrlRedirect
 @{
     Script.Reqiured("validate").AtFoot();
 }
 
 <div class="panel panel-default">
     <div class="panel-heading">
-        新建
+        @L("New")
     </div>
     <div class="panel-body">
         @using (Html.BeginForm())
         {
             @Html.EditorForModel()
             <div class="toolBar">
-                <input type="submit" class="btn btn-primary " value="保存" data-value="@ActionType.Create" />                              
-                <input type="button" class="btn btn-default cancel" value="取消" />
+                @if (Authorizer.Authorize(ZKEACMS.Redirection.PermissionKeys.ManageUrlRedirect))
+                {
+                    <input type="submit" class="btn btn-primary " value="@L("Save")" data-value="@ActionType.Create" />
+                    <input type="submit" class="btn btn-primary" value="@L("Save And Exit")" data-value="@ActionType.CreateAndExit" />
+                }
+                <a class="btn btn-default" href="@Url.Action("Index")">@L("Cancel")</a>
             </div>
         }
     </div>

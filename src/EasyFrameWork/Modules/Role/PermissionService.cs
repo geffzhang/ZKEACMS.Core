@@ -7,7 +7,7 @@ namespace Easy.Modules.Role
 {
     public class PermissionService : ServiceBase<Permission, EasyDbContext>, IPermissionService
     {
-        public PermissionService(IApplicationContext applicationContext) : base(applicationContext)
+        public PermissionService(IApplicationContext applicationContext, EasyDbContext easyDbContext) : base(applicationContext, easyDbContext)
         {
         }
 
@@ -18,6 +18,6 @@ namespace Easy.Modules.Role
                 return DbContext.Permission;
             }
         }
-        
+
     }
 }

@@ -1,4 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ZKEACMS.SectionWidget.Models;
@@ -11,7 +13,7 @@ namespace ZKEACMS.SectionWidget
         {
             if (content != null && content.SectionContentType > 0)
             {
-                html.RenderPartial("SectionPartial." + ((SectionContentBase.Types)content.SectionContentType), content);
+                html.RenderPartialAsync("SectionPartial." + ((SectionContentBase.Types)content.SectionContentType), content).GetAwaiter().GetResult();
             }
         }
 
@@ -19,7 +21,7 @@ namespace ZKEACMS.SectionWidget
         {
             if (content != null && content.SectionContentType > 0)
             {
-                html.RenderPartial("SectionPartial." + ((SectionContentBase.Types)content.SectionContentType + ".Edit"), content);
+                html.RenderPartialAsync("SectionPartial." + ((SectionContentBase.Types)content.SectionContentType + ".Edit"), content).GetAwaiter().GetResult();
             }
         }
     }

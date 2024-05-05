@@ -1,5 +1,9 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System.Text.RegularExpressions;
+using Easy.Extend;
 
 namespace Easy.ViewPort.Validator
 {
@@ -8,14 +12,14 @@ namespace Easy.ViewPort.Validator
         public RegularValidator(string expression)
         {
             this.Expression = expression;
-            this.BaseErrorMessage = "{0}的输入的值不舒合要求";
+            BaseErrorMessage = "{0} is invalid";
         }
         public string Expression { get; set; }
 
         public override bool Validate(object value)
         {
             if (value == null) return true;
-           return Regex.IsMatch(value.ToString(), this.Expression);
+            return Regex.IsMatch(value.ToString(), this.Expression);
         }
     }
 }

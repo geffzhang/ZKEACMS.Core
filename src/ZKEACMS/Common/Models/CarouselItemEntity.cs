@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy.MetaData;
 using Easy.Models;
@@ -6,10 +9,11 @@ using ZKEACMS;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using ZKEACMS.Extend;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.Common.Models
 {
-    [ViewConfigure(typeof(CarouselItemEntityMeta)), Table("CarouselItem")]
+    [DataTable("CarouselItem")]
     public class CarouselItemEntity : EditorEntity
     {
         [Key]
@@ -32,7 +36,7 @@ namespace ZKEACMS.Common.Models
             ViewConfig(m => m.CarouselWidgetID).AsHidden();
             ViewConfig(m => m.Description).AsHidden();
             ViewConfig(m => m.TargetLink).AsTextBox().PageSelector();
-            ViewConfig(m => m.ImageUrl).AsTextBox().MediaSelector();
+            ViewConfig(m => m.ImageUrl).AsTextBox().MediaSelector().Required();
         }
     }
 

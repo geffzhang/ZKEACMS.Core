@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +19,7 @@ namespace ZKEACMS.Dashboard
         public IEnumerable<DashboardPart> GetDashboardParts()
         {
             if (!_dashboardPartDriveServices.Any()) return new List<DashboardPart>();
-            return _dashboardPartDriveServices.Select(p => p.Create());
+            return _dashboardPartDriveServices.Select(p => p.Create()).Where(p => p != null);
         }
     }
 }

@@ -1,27 +1,27 @@
 /* http://www.zkea.net/ 
- * Copyright 2017 ZKEASOFT 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
  * http://www.zkea.net/licenses */
 
 using Easy;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using ZKEACMS.Common.Models;
 using ZKEACMS.Widget;
 
 namespace ZKEACMS.Common.Service
 {
-    public class HtmlWidgetService : WidgetService<HtmlWidget, CMSDbContext>
+    public class HtmlWidgetService : WidgetService<HtmlWidget>
     {
-        public HtmlWidgetService(IWidgetBasePartService widgetService, IApplicationContext applicationContext)
-            : base(widgetService, applicationContext)
+        public HtmlWidgetService(IWidgetBasePartService widgetService, IApplicationContext applicationContext, CMSDbContext dbContext)
+            : base(widgetService, applicationContext, dbContext)
         {
         }
 
-        public override DbSet<HtmlWidget> CurrentDbSet
+        public override DbSet<HtmlWidget> CurrentDbSet => DbContext.HtmlWidget;
+
+        protected override IEnumerable<string> GetFilesInWidget(HtmlWidget widget)
         {
-            get
-            {
-                return DbContext.HtmlWidget;
-            }
+            return ParseHtmlImageUrls(widget.HTML);
         }
     }
 }

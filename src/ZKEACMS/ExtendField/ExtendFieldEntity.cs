@@ -1,13 +1,17 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy.MetaData;
 using Easy.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.ExtendField
 {
-    [ViewConfigure(typeof(ExtendFieldEntityMetaData)), Table("ExtendField")]
+    [DataTable("ExtendField")]
     public class ExtendFieldEntity : EditorEntity
     {
         [Key]

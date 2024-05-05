@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.ViewPort.Validator;
 using System;
 
@@ -15,20 +18,20 @@ namespace Easy.ViewPort.Descriptor
         public string DateFormat { get; set; }
         public string JavaScriptDateFormat { get; set; }
 
-        
+
 
         public TextBoxDescriptor FormatAsDate()
         {
             FormatDate("yyyy/MM/dd");
-            FormatDateForJavaScript("yyyy/mm/dd");
+            FormatDateForJavaScript("YYYY/MM/DD");
             this.AddClass("Date");
             return this;
         }
-        
+
         public TextBoxDescriptor FormatAsDateTime()
         {
-            FormatDate("yyyy/MM/dd hh:mm");
-            FormatDateForJavaScript("yyyy/mm/dd hh:mm");
+            FormatDate("yyyy/MM/dd HH:mm");
+            FormatDateForJavaScript("YYYY/MM/DD HH:mm:ss");
             return this;
         }
         public TextBoxDescriptor FormatDate(string format)
@@ -81,11 +84,6 @@ namespace Easy.ViewPort.Descriptor
             });
             return this;
         }
-        public TextBoxDescriptor PlaceHolder(string info)
-        {
-            this.AddProperty("placeholder", info);
-            return this;
-        }
 
         public TextBoxDescriptor Email()
         {
@@ -93,8 +91,7 @@ namespace Easy.ViewPort.Descriptor
             this.Validator.Add(new RegularValidator(Constant.RegularExpression.Email)
             {
                 Property = this.Name,
-                DisplayName = this.DisplayName,
-                ErrorMessage = "输入的邮件格式不正确"
+                DisplayName = () => this.DisplayName
             });
             return this;
         }
@@ -104,7 +101,7 @@ namespace Easy.ViewPort.Descriptor
             {
                 ErrorMessage = errorMsg,
                 Property = this.Name,
-                DisplayName = this.DisplayName
+                DisplayName = () => this.DisplayName
             });
             return this.Email();
         }
@@ -197,7 +194,7 @@ namespace Easy.ViewPort.Descriptor
             return this;
         }
 
-        
-        
+
+
     }
 }

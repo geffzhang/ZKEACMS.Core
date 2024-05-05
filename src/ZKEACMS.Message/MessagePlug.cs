@@ -1,15 +1,17 @@
-/* 
- * http://www.zkea.net/ 
- * Copyright 2017 ZKEASOFT 
- * http://www.zkea.net/licenses 
- */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
+using Easy;
 using Easy.Mvc.Resource;
 using Easy.Mvc.Route;
+using Easy.RepositoryPattern;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using ZKEACMS.Message.Models;
 using ZKEACMS.Message.Service;
+using ZKEACMS.WidgetTemplate;
 
 namespace ZKEACMS.Message
 {
@@ -30,41 +32,104 @@ namespace ZKEACMS.Message
         {
             yield return new AdminMenu
             {
-                Title = "¡Ù—‘∞Â",
+                Title = "Message And Comments",
                 Icon = "glyphicon-volume-up",
-                Url = "~/Admin/Message",
                 Order = 7,
-                PermissionKey = PermissionKeys.ViewMessage
+                Children = new List<AdminMenu>
+                {
+                    new AdminMenu
+                    {
+                        Title = "Message",
+                        Url = "~/admin/message",
+                        Order = 1,
+                        Icon = "glyphicon-volume-up",
+                        PermissionKey = PermissionKeys.ViewMessage
+                    },
+                    new AdminMenu
+                    {
+                        Title = "Comments",
+                        Url = "~/admin/comments",
+                        Order = 2,
+                        Icon = "glyphicon-comment",
+                        PermissionKey = PermissionKeys.ViewComments
+                    }
+                }
             };
         }
 
-       
+
 
         public override IEnumerable<PermissionDescriptor> RegistPermission()
         {
-            yield return new PermissionDescriptor(PermissionKeys.ViewMessage, "¡Ù—‘∞Â", "≤Èø¥¡Ù—‘", "");
-            yield return new PermissionDescriptor(PermissionKeys.ManageMessage, "¡Ù—‘∞Â", "π‹¿Ì¡Ù—‘", "");
+            yield return new PermissionDescriptor(PermissionKeys.ViewMessage, "Message And Comments", "View Message", "");
+            yield return new PermissionDescriptor(PermissionKeys.ManageMessage, "Message And Comments", "Manage Message", "");
+            yield return new PermissionDescriptor(PermissionKeys.ViewComments, "Message And Comments", "View Comments", "");
+            yield return new PermissionDescriptor(PermissionKeys.ManageComments, "Message And Comments", "Manage Comments", "");
         }
 
-        public override IEnumerable<Type> WidgetServiceTypes()
+        public override IEnumerable<WidgetTemplateEntity> WidgetServiceTypes()
         {
-            yield return typeof(MessageBoxWidgetService);
-            yield return typeof(MessageWidgetService);
+            string groupName = "5.Message";
+            yield return new WidgetTemplateEntity<CommentsWidgetService>
+            {
+                Title = "Comment Box",
+                GroupName = groupName,
+                PartialView = "Widget.Comments",
+                Thumbnail = "~/Plugins/ZKEACMS.Message/Content/Image/Widget.Comments.png",
+                Order = 1
+            };
+            yield return new WidgetTemplateEntity<MessageWidgetService>
+            {
+                Title = "Message Board",
+                GroupName = groupName,
+                PartialView = "Widget.Message",
+                Thumbnail = "~/Plugins/ZKEACMS.Message/Content/Image/Widget.Message.png",
+                Order = 2
+            };
+            yield return new WidgetTemplateEntity<MessageBoxWidgetService>
+            {
+                Title = "Message List",
+                GroupName = groupName,
+                PartialView = "Widget.MessageBox",
+                Thumbnail = "~/Plugins/ZKEACMS.Message/Content/Image/Widget.MessageBox.png",
+                Order = 3
+            };
         }
 
         public override void ConfigureServices(IServiceCollection serviceCollection)
         {
+            serviceCollection.AddSingleton<IOnModelCreating, EntityFrameWorkModelCreating>();
+
             serviceCollection.AddTransient<IMessageService, MessageService>();
+            serviceCollection.AddTransient<ICommentsService, CommentsService>();
+
+            serviceCollection.ConfigureMetaData<Comments, CommentsMetadata>();
+            serviceCollection.ConfigureMetaData<CommentsWidget, CommentsWidgetMetaData>();
+            serviceCollection.ConfigureMetaData<MessageBoxWidget, MessageBoxWidgetMetaData>();
+            serviceCollection.ConfigureMetaData<MessageEntity, MessageMetaData>();
+            serviceCollection.ConfigureMetaData<MessageWidget, MessageWidgetMetaData>();
+
+            serviceCollection.Configure<MessageBoxWidget>(option =>
+            {
+                option.DataSourceLinkTitle = "Message";
+                option.DataSourceLink = "~/admin/message";
+            });
+            serviceCollection.Configure<CommentsWidget>(option =>
+            {
+                option.DataSourceLinkTitle = "Comments";
+                option.DataSourceLink = "~/admin/comments";
+            });
+            
         }
 
         protected override void InitScript(Func<string, ResourceHelper> script)
         {
-            
+            script("comments").Include("~/Plugins/ZKEACMS.Message/Scripts/comments.js", "~/Plugins/ZKEACMS.Message/Scripts/comments.min.js");
         }
 
         protected override void InitStyle(Func<string, ResourceHelper> style)
         {
-            
+            style("comments").Include("~/Plugins/ZKEACMS.Message/Content/comments.css", "~/Plugins/ZKEACMS.Message/Content/comments.min.css");
         }
     }
 }

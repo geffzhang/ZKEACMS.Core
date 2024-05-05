@@ -1,13 +1,17 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Easy.MetaData;
 using Easy.Models;
+using Easy.RepositoryPattern;
 
 namespace Easy.Modules.DataDictionary
 {
-    [ViewConfigure(typeof(DataDictionaryEntityMetaData)),Table("DataDictionary")]
+    [DataTable("DataDictionary")]
     public class DataDictionaryEntity : IImage
     {
         [Key]
@@ -65,12 +69,10 @@ namespace Easy.Modules.DataDictionary
     }
     class DataDictionaryEntityMetaData : ViewMetaData<DataDictionaryEntity>
     {
-       
-
         protected override void ViewConfigure()
         {
             ViewConfig(m => m.ID).AsHidden();
-            ViewConfig(m => m.DicName).AsTextBox().Required().MaxLength(25);
+            ViewConfig(m => m.DicName).AsTextBox().Required();
             ViewConfig(m => m.IsSystem).AsCheckBox().ReadOnly();
             ViewConfig(m => m.DicValue).AsTextBox();
             ViewConfig(m => m.Title).AsHidden();

@@ -1,4 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 namespace Easy.Mvc
 {
@@ -14,12 +16,15 @@ namespace Easy.Mvc
             this.Status = status;
         }
         public string Message { get; set; }
+        public string Location { get; set; }
+        public object Data { get; set; }
         public AjaxStatus Status { get; set; }
     }
     public enum AjaxStatus
     {
         Normal = 1,
         Warn = 2,
-        Error = 3
+        Error = 3,
+        Redirect = 4
     }
 }

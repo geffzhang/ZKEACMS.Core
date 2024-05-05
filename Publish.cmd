@@ -1,31 +1,29 @@
 @echo off
 @echo -----------------------------------------------------------------------------
-@echo *** 欢迎使用 ZKEACMS ***
+@echo *** Welcome to use ZKEACMS ***
 @echo -----------------------------------------------------------------------------
-@echo 该工具将帮助您发布您的 ZKEACMS 程序
-@echo 在开始之前请您先查看我们的许可协议
+@echo This tool will help you to publish ZKEACMS
+@echo License
 @echo http://www.zkea.net/licenses
 @echo -----------------------------------------------------------------------------
-@echo 有关于.Net Core应用程序的安装部署，请查看 Microsoft Docs
-@echo .NET Core 应用程序部署
-@echo https://docs.microsoft.com/zh-cn/dotnet/articles/core/deploying
-@echo .NET Core 运行时标识符 (RID) 目录
-@echo https://docs.microsoft.com/zh-cn/dotnet/articles/core/rid-catalog
+@echo Deploy
+@echo http://www.zkea.net/zkeacms/document/deploy/core
 @echo -----------------------------------------------------------------------------
-@echo 注意：发布前将清空发布目录
+@echo RID details
+@echo https://docs.microsoft.com/en-us/dotnet/core/rid-catalog
+@echo -----------------------------------------------------------------------------
+@echo Notice: Application will publish to folder(src/ZKEACMS.WebHost/bin/Release/PublishOutput)
+WHERE /Q dotnet
+IF %ERRORLEVEL% NEQ 0 (
+@echo dotnet core sdk was not find, please install the latest sdk at first.
 @pause
-@echo ------------------- Clean Publish Output -------------------
-set current_path=%cd%
-rd/s/q %current_path%\src\ZKEACMS.WebHost\bin\Release\PublishOutput
+start https://www.microsoft.com/net/download/windows
+exit
+)
+@echo Publishing, please wait...
 
-@echo ------------------- Build -------------------
-dotnet build -c Release ZKEACMS.sln
-@echo ------------------ Release ------------------
+dotnet restore
 cd src/ZKEACMS.WebHost
-dotnet publish -c Release -o ./bin/Release/PublishOutput
-cd ../../
-cd PluginPublisher
-dotnet run
-cd ../
-set current_path=%cd%
-explorer %current_path%\src\ZKEACMS.WebHost\bin\Release\PublishOutput
+dotnet tool restore
+dotnet tool run publish-zkeacms
+explorer %cd%\bin\Release\PublishOutput

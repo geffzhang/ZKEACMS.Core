@@ -1,5 +1,5 @@
 /* http://www.zkea.net/ 
- * Copyright 2017 ZKEASOFT 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
  * http://www.zkea.net/licenses */
 
 using Easy;
@@ -14,10 +14,11 @@ using ZKEACMS.Article.Service;
 using ZKEACMS.MetaData;
 using ZKEACMS.Widget;
 using ZKEACMS.Extend;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.Article.Models
 {
-    [ViewConfigure(typeof(ArticleListWidgetMeta)), Table("ArticleListWidget")]
+    [DataTable("ArticleListWidget")]
     public class ArticleListWidget : BasicWidget
     {
         public int ArticleTypeID { get; set; }
@@ -30,21 +31,15 @@ namespace ZKEACMS.Article.Models
         protected override void ViewConfigure()
         {
             base.ViewConfigure();
+            ViewConfig(m => m.Title).AsHidden();
+            ViewConfig(m => m.ArticleTypeID).AsDropDownList().Order(NextOrder()).SetTemplate("ArticleTypeTree").Required();
 
-            ViewConfig(m => m.ArticleTypeID).AsDropDownList().Order(NextOrder())
-                .DataSource(() =>
-                {
-                    var articleTypeService = ServiceLocator.GetService<IArticleTypeService>();
-                    return articleTypeService.Get().ToDictionary(m => m.ID.ToString(), m => m.Title);
-                })
-                .Required().AddClass("select").AddProperty("data-url", "/admin/ArticleType/Select");
-
-            ViewConfig(m => m.DetailPageUrl).AsTextBox().Order(NextOrder()).PageSelector();
+            ViewConfig(m => m.DetailPageUrl).AsTextBox().Order(NextOrder()).PageSelector().InnerUrl();
 
             ViewConfig(m => m.IsPageable).AsCheckBox().Order(NextOrder());
             ViewConfig(m => m.PageSize).AsTextBox().Order(NextOrder()).Range(1, 50);
 
-            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary);
+            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary).AsWidgetTemplateChooser();
         }
     }
 

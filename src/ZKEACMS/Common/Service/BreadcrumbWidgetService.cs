@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System.Collections.Generic;
 using System.Linq;
 using Easy;
@@ -7,6 +10,7 @@ using ZKEACMS.Common.Models;
 using ZKEACMS.Widget;
 using ZKEACMS.Page;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ZKEACMS.Common.Service
 {
@@ -14,19 +18,23 @@ namespace ZKEACMS.Common.Service
     {
         private readonly IPageService _pageService;
 
-        public BreadcrumbWidgetService(IWidgetBasePartService widgetBasePartService, IApplicationContext applicationContext, IPageService pageService) : base(widgetBasePartService, applicationContext)
+        public BreadcrumbWidgetService(IWidgetBasePartService widgetBasePartService, IApplicationContext applicationContext, IPageService pageService, CMSDbContext dbContext) :
+            base(widgetBasePartService, applicationContext, dbContext)
         {
             _pageService = pageService;
         }
 
+        public override DbSet<BreadcrumbWidget> CurrentDbSet => DbContext.BreadcrumbWidget;
 
-        public override WidgetViewModelPart Display(WidgetBase widget, ActionContext actionContext)
+        public override object Display(WidgetDisplayContext widgetDisplayContext)
         {
-
-            List<PageEntity> ParentPages = new List<PageEntity>();
-            GetParentPage(ParentPages, actionContext.HttpContext.GetLayout().Page);
-
-            return widget.ToWidgetViewModelPart(ParentPages);
+            List<PageEntity> parentPages = new List<PageEntity>();
+            var layout = widgetDisplayContext.PageLayout;
+            if (layout != null && layout.Page != null)
+            {
+                GetParentPage(parentPages, layout.Page);
+            }
+            return parentPages;
         }
 
         void GetParentPage(List<PageEntity> parentPages, PageEntity page)

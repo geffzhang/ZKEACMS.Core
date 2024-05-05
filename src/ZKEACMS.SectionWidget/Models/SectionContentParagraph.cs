@@ -1,14 +1,19 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy.MetaData;
 using System.ComponentModel.DataAnnotations.Schema;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.SectionWidget.Models
 {
-    [ViewConfigure(typeof(SectionContentParagraphMetaData)), Table("SectionContentParagraph")]
+    [DataTable("SectionContentParagraph")]
     public class SectionContentParagraph : SectionContentBasic
     {
         public string HtmlContent { get; set; }
+        [NotMapped]
         public override int SectionContentType
         {
             get

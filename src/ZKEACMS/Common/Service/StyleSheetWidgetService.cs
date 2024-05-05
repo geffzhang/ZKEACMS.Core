@@ -1,25 +1,31 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy;
+using Easy.RepositoryPattern;
 using Microsoft.EntityFrameworkCore;
 using ZKEACMS.Common.Models;
 using ZKEACMS.Widget;
+using Easy.Extend;
 
 namespace ZKEACMS.Common.Service
 {
-    public class StyleSheetWidgetService : WidgetService<StyleSheetWidget, CMSDbContext>
+    public class StyleSheetWidgetService : WidgetService<StyleSheetWidget>
     {
-        public StyleSheetWidgetService(IWidgetBasePartService widgetService, IApplicationContext applicationContext)
-            : base(widgetService, applicationContext)
+        public StyleSheetWidgetService(IWidgetBasePartService widgetService, IApplicationContext applicationContext, CMSDbContext dbContext)
+            : base(widgetService, applicationContext, dbContext)
         {
         }
-
-        public override DbSet<StyleSheetWidget> CurrentDbSet
+        public override DbSet<StyleSheetWidget> CurrentDbSet => DbContext.StyleSheetWidget;
+        public override ServiceResult<StyleSheetWidget> Add(StyleSheetWidget item)
         {
-            get
+            if (item.StyleClass.IsNullOrEmpty())
             {
-                return DbContext.StyleSheetWidget;
+                item.StyleClass = "full";
             }
+            return base.Add(item);
         }
     }
 }

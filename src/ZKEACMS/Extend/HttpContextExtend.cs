@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using ZKEACMS.Layout;
 using Microsoft.AspNetCore.Http;
 
@@ -6,16 +9,9 @@ namespace ZKEACMS
 {
     public static class HttpContextExtend
     {
-        public static void TrySetLayout(this HttpContext httpContext, LayoutEntity layout)
+        public static string GetUrlWithHost(this HttpContext httpContext, string path)
         {
-            if (!httpContext.Items.ContainsKey(StringKeys.LayoutItem))
-            {
-                httpContext.Items.Add(StringKeys.LayoutItem, layout);
-            }
-        }
-        public static LayoutEntity GetLayout(this HttpContext httpContext)
-        {
-            return httpContext.Items[StringKeys.LayoutItem] as LayoutEntity;
+            return $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{path}";
         }
     }
 }

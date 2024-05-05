@@ -1,4 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
 using Easy;
 using Easy.Mvc.Attribute;
@@ -6,13 +8,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ZKEACMS.Article.Service;
+using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 namespace ZKEACMS.Article.ActionFilter
 {
-    public class ViewDataArticleTypeAttribute : ViewDataAttribute
+    public class ViewDataArticleTypeAttribute : Easy.Mvc.Attribute.ViewDataAttribute
     {
-        private IArticleTypeService _articleTypeService;
-
         public override void OnActionExecuted(ActionExecutedContext filterContext)
         {
 
@@ -20,9 +22,9 @@ namespace ZKEACMS.Article.ActionFilter
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            _articleTypeService = _articleTypeService ?? ServiceLocator.GetService<IArticleTypeService>();
+            var types = filterContext.HttpContext.RequestServices.GetService<IArticleTypeService>().Get().ToList();
             (filterContext.Controller as Controller)
-                .ViewData[ViewDataKeys.ArticleCategory] = new SelectList(_articleTypeService.Get(), "ID", "Title");
+                .ViewData[ViewDataKeys.ArticleCategory] = new SelectList(types, "ID", "Title");
         }
     }
 }

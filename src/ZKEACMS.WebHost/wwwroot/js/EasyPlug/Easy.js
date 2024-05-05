@@ -1,8 +1,6 @@
-﻿/*!
- * http://www.zkea.net/
- * Copyright 2016 ZKEASOFT
- * http://www.zkea.net/licenses
- */
+﻿/*! http://www.zkea.net/
+ * Copyright (c) ZKEASOFT. All rights reserved.
+ * http://www.zkea.net/licenses */
 
 /*Easy通用JS插件包
 方法说明 以下方法均在Easy命名空间下
@@ -62,10 +60,10 @@ Easy.Processor = function (fun, delay) {
     /// <summary>函数节流（禁止函数因频繁运行而影响性能）</summary>
     /// <param name="fun" type="Function">要推迟执行的函数</param>
     /// <param name="delay" type="Int">推迟执行的时间</param>
-    clearTimeout(fun.tid);
+    clearTimeout(this.tid);
     if (typeof delay != "number")
         delay = 60;
-    fun.tid = setTimeout(function () { if (fun) fun.call(); }, delay);
+    this.tid = setTimeout(function () { if (fun) fun.call(); }, delay);
 }
 Easy.WindowSize = function () {
     /// <summary>浏览器窗体大小</summary>
@@ -110,7 +108,7 @@ Easy.Cookie = (function () {
     function DeleteCookie(c_name) {
         if (GetCookie(c_name)) {
             document.cookie = c_name + "=" +
-            "; expires=Thu, 01-Jan-70 00:00:01 GMT";
+                "; expires=Thu, 01-Jan-70 00:00:01 GMT";
         }
     }
     return { SetCookie: SetCookie, GetCookie: GetCookie, DeleteCookie: DeleteCookie }
@@ -175,6 +173,7 @@ Easy.OpacityBackGround = (function () {
 })();
 
 Easy.Block = function () {
+    Easy.Block.IsBlocked = true;
     if ($(".easy-block").size() === 0) {
         Easy.OpacityBackGround.Show();
         $(".OpacityBackGround").addClass("busy");
@@ -182,9 +181,12 @@ Easy.Block = function () {
     }
 }
 Easy.UnBlock = function () {
-    $(".OpacityBackGround").removeClass("busy");
-    Easy.OpacityBackGround.Close();
-    $(".easy-block").remove();
+    if (Easy.Block.IsBlocked) {
+        Easy.Block.IsBlocked = false;
+        $(".OpacityBackGround").removeClass("busy");
+        Easy.OpacityBackGround.Close();
+        $(".easy-block").remove();
+    }
 }
 
 Easy.ShowMessageBox = function (title, msg, fnOk, ShowCancel, zindex) {
@@ -195,12 +197,12 @@ Easy.ShowMessageBox = function (title, msg, fnOk, ShowCancel, zindex) {
     /// <param name="ShowCancel" type="Boolean">是否显示取消按钮</param>
     /// <param name="zindex" type="Int">z方向的层次</param>
     var box = $("<div class='MessageBox BoxShadow'>" +
-            "<div class='MBContent'>" +
-                "<div id='MessageBoxTitle' class='MBTitle'></div>" +
-                "<div id='MessageBoxMsg' class='MBMSgText'></div>" +
-                "<div class='MBFoot'>" +
-                    "<div id='MessageBoxActions' class='MBActions'></div>" +
-                    "<div style='clear: both'></div></div></div></div>");
+        "<div class='MBContent'>" +
+        "<div id='MessageBoxTitle' class='MBTitle'></div>" +
+        "<div id='MessageBoxMsg' class='MBMSgText'></div>" +
+        "<div class='MBFoot'>" +
+        "<div id='MessageBoxActions' class='MBActions'></div>" +
+        "<div style='clear: both'></div></div></div></div>");
     box.find("#MessageBoxMsg").html(msg);
     box.find("#MessageBoxTitle").html(title);
 
@@ -219,9 +221,6 @@ Easy.ShowMessageBox = function (title, msg, fnOk, ShowCancel, zindex) {
         Easy.OpacityBackGround.Close();
         box.animate({ top: "45%", opacity: 0 }, 200, function () { $(this).remove(); });
     });
-    if (fnOk != null && !ShowCancel) {
-        ShowCancel = true;
-    }
     if (typeof ShowCancel == "boolean") {
         if (ShowCancel) {
             var CancelButton = $("<input id='MessageBoxCancelBtn' type='button' class='btn btn-default' value='取消' />");
@@ -271,13 +270,17 @@ Easy.MessageTip = (function () {
 Easy.ShowUrlWindow = function (op) {
     /// <summary>打开窗口 Op = { url: "", title: "", width: 800, height: 600, callBack: function () { },isDialog:false ,zindex:0}</summary>
     var boxWindow = $("<div class='WeiWindow BoxShadow'><div class='TitleBar'><div class='Left TitleBarLeft'></div><div class='Mid TitleBarMid'></div>" +
-            "<div class='Right TitleBarRight'><div class='CloseWindow'></div></div></div><div class='Content'><div class='Left ContentLeft'></div><div class='Mid ContentMid'>" +
-            "<iframe src='' width='100%' height='100%' frameborder='0'></iframe></div><div class='Right ContentRight'></div></div><div class='Botoom'>" +
-            "<div class='Left BottomLeft'></div><div class='Mid BottomMid'></div><div class='Right BottomRight'></div></div></div>");
-    var deOp = { url: "", title: "", width: 800, height: 500, callBack: function () { }, isDialog: true, animate: false, onLoad: function () { } };
+        "<div class='Right TitleBarRight'><div class='CloseWindow'></div></div></div><div class='Content'><div class='Left ContentLeft'></div><div class='Mid ContentMid'>" +
+        "<iframe src='' width='100%' height='100%' frameborder='0'></iframe></div><div class='Right ContentRight'></div></div><div class='Botoom'>" +
+        "<div class='Left BottomLeft'></div><div class='Mid BottomMid'></div><div class='Right BottomRight'></div></div></div>");
+    var deOp = { url: "", title: "", callBack: function () { }, isDialog: true, animate: false, onLoad: function () { } };
     deOp = $.extend(deOp, op);
     if (deOp.isDialog) {
-        Easy.OpacityBackGround.Show(++Easy.MaxZindex);
+        if (op.zindex) {
+            Easy.OpacityBackGround.Show(op.zindex - 1);
+        } else {
+            Easy.OpacityBackGround.Show(++Easy.MaxZindex);
+        }
     }
     boxWindow.appendTo("body");
     boxWindow.find(".Mid.TitleBarMid").DragElement(boxWindow, boxWindow.find(".CloseWindow"), boxWindow.find(".Right.ContentRight"), boxWindow.find(".Right.BottomRight"), boxWindow.find(".Mid.BottomMid"));
@@ -298,19 +301,30 @@ Easy.ShowUrlWindow = function (op) {
         boxWindow.find(".CloseWindow").click();
     }
     boxWindow.center = function () {
-        boxWindow.animate({ left: (Easy.WindowSize().width - deOp.width) / 2, top: (Easy.WindowSize().height - deOp.height) / 2 }, { speed: 200 });
+        boxWindow.animate({ left: (Easy.WindowSize().width - boxWindow.outerWidth()) / 2, top: (Easy.WindowSize().height - boxWindow.outerHeight()) / 2 }, { speed: 200 });
     }
     $(window).resize(function () {
         Easy.Processor(boxWindow.center, 300);
     });
-    boxWindow.width(deOp.width);
-    boxWindow.height(deOp.height);
-    boxWindow.css("left", (Easy.WindowSize().width - deOp.width) / 2);
-    boxWindow.css("top", (Easy.WindowSize().height - deOp.height) / 2);
+    var windowSize = Easy.WindowSize();
+    if (deOp.width && (deOp.width < windowSize.width)) {
+        boxWindow.width(deOp.width);
+    }
+    else {
+        boxWindow.width(windowSize.width * 0.8);
+    }
+    if (deOp.height && (deOp.height < windowSize.height)) {
+        boxWindow.height(deOp.height);
+    }
+    else {
+        boxWindow.height(windowSize.height * 0.8);
+    }
+    boxWindow.css("left", (windowSize.width - boxWindow.outerWidth()) / 2);
+    boxWindow.css("top", (windowSize.height - boxWindow.outerHeight()) / 2);
     boxWindow.find(".Mid.TitleBarMid").html(deOp.title);
 
     var reSet = true;
-    boxWindow.find("iframe").load(function () {
+    boxWindow.find("iframe").on("load", function () {
         if (deOp.title == "") {
             boxWindow.find(".Mid.TitleBarMid").html(this.contentWindow.document.title);
         }
@@ -341,7 +355,58 @@ Easy.jQueryEasing = (function () {
     /// <summary>http://jqueryui.com/demos/effect/easing.html</summary>
     return { linear: "linear", swing: "swing", easeInQuad: "easeInQuad", easeOutQuad: "easeOutQuad", easeInOutQuad: "easeInOutQuad", easeInCubic: "easeInCubic", easeOutCubic: "easeOutCubic", easeInOutCubic: "easeInOutCubic", easeInQuart: "easeInQuart", easeOutQuart: "easeOutQuart", easeInOutQuart: "easeInOutQuart", easeInQuint: "easeInQuint", easeOutQuint: "easeOutQuint", easeInOutQuint: "easeInOutQuint", easeInSine: "easeInSine", easeOutSine: "easeOutSine", easeInOutSine: "easeInOutSine", easeInExpo: "easeInExpo", easeOutExpo: "easeOutExpo", easeInOutExpo: "easeInOutExpo", easeInCirc: "easeInCirc", easeOutCirc: "easeOutCirc", easeInOutCirc: "easeInOutCirc", easeInElastic: "easeInElastic", easeOutElastic: "easeOutElastic", easeInOutElastic: "easeInOutElastic", easeInBack: "easeInBack", easeOutBack: "easeOutBack", easeInOutBack: "easeInOutBack", easeInBounce: "easeInBounce", easeOutBounce: "easeOutBounce", easeInOutBounce: "easeInOutBounce" }
 })();
+Easy.PlayVideo = function (url) {
+    var player = document.createElement("div");
+    player.style = "position:fixed;left:0;right:0;top:0;bottom:0;z-index:99999;background:rgba(0,0,0,0.8);transition:opacity 500ms;opacity:0;";
+    var closeButon = document.createElement("button");
+    closeButon.style = "background:#d91437;border:none;width:50px;height:50px;padding:6px;cursor:pointer;position:absolute;right:10px;top:10px;box-sizing:border-box;";
+    closeButon.type = "button";
+    closeButon.title = "close";
+    var xmlns = "http://www.w3.org/2000/svg";
+    var closeIcon = document.createElementNS(xmlns, "svg");
+    closeIcon.setAttributeNS(null, "viewBox", "0 0 14 14");
+    closeIcon.style = "width:38px;height:38px;fill:#fff;";
+    var path = document.createElementNS(xmlns, "path");
+    path.setAttributeNS(null, "d", "M.46 12.023L11.772.709l1.768 1.768L2.227 13.791z");
+    var path2 = document.createElementNS(xmlns, "path");
+    path2.setAttributeNS(null, "d", "M2.227.71l11.314 11.313-1.768 1.768L.459 2.477z");
+    closeIcon.appendChild(path);
+    closeIcon.appendChild(path2);
+    closeButon.appendChild(closeIcon);
+    player.appendChild(closeButon);
+    var videoContainer = document.createElement("div");
+    videoContainer.style = "position:absolute;top:70px;bottom:60px;left:10px;right:10px;display:flex;align-content:center;justify-content:center;";
 
+    var videoLink = url;
+    if (videoLink.indexOf(".mp4") > 0) {
+        var video = document.createElement("video");
+        video.controls = true;
+        video.autoplay = true;
+        video.muted = true;
+        video.src = videoLink;
+        video.style.maxWidth = "100%";
+        video.style.maxHeight = "100%";
+        videoContainer.appendChild(video);
+    } else {
+        var iframe = document.createElement("iframe");
+        iframe.src = videoLink;
+        iframe.style = "width:100%;height:100%;";
+        iframe.allowFullscreen = true;
+        iframe.frameBorder = "0";
+        videoContainer.appendChild(iframe);
+    }
+    player.appendChild(videoContainer);
+    closeButon.addEventListener("click", function () {
+        player.style.opacity = 0;
+        setTimeout(function () {
+            document.body.removeChild(player);
+        }, 500);
+    });
+    document.body.appendChild(player);
+    setTimeout(function () {
+        player.style.opacity = 1;
+    });
+}
 
 /*jQuery扩展方法*/
 jQuery.fn.extend({
@@ -356,17 +421,14 @@ jQuery.fn.extend({
         var MouseY = 0;
         var Qthis = this;
         if (!(targetEle instanceof jQuery)) {
-            if (Qthis.css("position") != "absolute" && Qthis.css("position") != "fixed" && Qthis.css("position") != "relative")
+            if (Qthis.css("position") != "absolute" && Qthis.css("position") != "fixed" && Qthis.css("position") != "relative") {
                 Qthis.css("position", "relative");
-            Qthis.css("left", Qthis.offset().left);
-            Qthis.css("top", Qthis.offset().top);
+            }
         }
         else {
             if (targetEle.css("position") != "absolute" && targetEle.css("position") != "fixed" && targetEle.css("position") != "relative") {
                 targetEle.css("position", "relative");
             }
-            targetEle.css("left", targetEle.offset().left);
-            targetEle.css("top", targetEle.offset().top);
         }
         Qthis.css("cursor", "move");
         Qthis.bind("mousedown", { ac: "move" }, EleMouseDown);
@@ -587,8 +649,7 @@ jQuery.fn.extend({
                     JqThis.scrollLeft(JqThis.scrollLeft() + offset);
                 else JqThis.scrollLeft(JqThis.scrollLeft() - offset);
             }
-            if (JqThis.scrollLeft() >= maxleft)
-            { Pac = 2; }
+            if (JqThis.scrollLeft() >= maxleft) { Pac = 2; }
             if (JqThis.scrollLeft() == 0)
                 Pac = 1;
         }
@@ -712,28 +773,50 @@ jQuery.fn.extend({
         });
     }
 });
+$.fn.size = function () {
+    return this.length;
+}
 $.ajaxSetup({
     beforeSend: function (xhr) {
-        xhr.busyTimer = setTimeout(function() {
+        xhr.busyTimer = setTimeout(function () {
             Easy.Block();
-        }, 1000);
+        }, 3000);
     },
     complete: function (xhr, status) {
         clearTimeout(xhr.busyTimer);
         Easy.UnBlock();
     }
 });
-$(function () {
-    if (!(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))) {
-        $(document).on("click", ".pop-dialog", function () {
-            Easy.ShowUrlWindow({
-                url: $(this).data("url") || $(this).attr("href"),
-                title: $(this).data("title") || $(this).attr("title"),
-                width: $(this).data("width") || 800,
-                height: $(this).data("height") || 500,
-                isDialog: true
-            });
-            return false;
-        });
+
+$(document).on("click", ".pop-dialog:not(.video-play)", function () {
+    Easy.ShowUrlWindow({
+        url: $(this).data("url") || $(this).attr("href"),
+        title: $(this).data("title") || $(this).attr("title"),
+        width: $(this).data("width") || 800,
+        height: $(this).data("height") || 500,
+        isDialog: true
+    });
+    return false;
+});
+
+
+document.addEventListener("click", function (e) {
+    var path = e.path || (e.composedPath && e.composedPath());
+    if (!path) return;
+
+    var videoElement = null;
+    for (var i = 0; i < path.length; i++) {
+        if (path[i] == document.body) break;
+
+        if (path[i].matches(".video-play")) {
+            videoElement = path[i];
+            break;
+        }
     }
+    if (!videoElement) return;
+
+    e.preventDefault();
+
+    Easy.PlayVideo(videoElement.getAttribute("href"));
+    return false;
 });

@@ -1,512 +1,294 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
 
+using DocumentFormat.OpenXml.Wordprocessing;
+using Easy.Extend;
+using FastExpressionCompiler;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Easy.Reflection
 {
-    internal class PropertyHelper
+    public static partial class PropertyHelper
     {
-        // Delegate type for a by-ref property getter
-        private delegate TValue ByRefFunc<TDeclaringType, TValue>(ref TDeclaringType arg);
+        private static ConcurrentDictionary<Type, ConcurrentDictionary<string, Func<object, object>>> _propertyGetters = new ConcurrentDictionary<Type, ConcurrentDictionary<string, Func<object, object>>>();
+        private static ConcurrentDictionary<Type, ConcurrentDictionary<string, Action<object, object>>> _propertySetters = new ConcurrentDictionary<Type, ConcurrentDictionary<string, Action<object, object>>>();
+        private static ConcurrentDictionary<Type, Func<object, object, object>> _indexGetters = new ConcurrentDictionary<Type, Func<object, object, object>>();
+        private static ConcurrentDictionary<Type, Action<object, object, object>> _indexSetters = new ConcurrentDictionary<Type, Action<object, object, object>>();
 
-        private static readonly MethodInfo CallPropertyGetterOpenGenericMethod =
-            typeof(PropertyHelper).GetTypeInfo().GetDeclaredMethod(nameof(CallPropertyGetter));
 
-        private static readonly MethodInfo CallPropertyGetterByReferenceOpenGenericMethod =
-            typeof(PropertyHelper).GetTypeInfo().GetDeclaredMethod(nameof(CallPropertyGetterByReference));
+        [GeneratedRegex("^\\[(\\d+)\\]$")]
+        private static partial Regex RegexOnlyNumberIndex();
+        [GeneratedRegex("^\\[\"([A-Za-z0-9_]+)\"\\]$")]
+        private static partial Regex RegexOnlyNameIndex();
+        [GeneratedRegex("^([A-Za-z0-9_]+)\\[(\\d+)\\]$")]
+        private static partial Regex RegexNumberIndex();
+        [GeneratedRegex("^([A-Za-z0-9_]+)\\[\"([A-Za-z0-9_]+)\"\\]$")]
+        private static partial Regex RegexNameIndex();
 
-        private static readonly MethodInfo CallNullSafePropertyGetterOpenGenericMethod =
-            typeof(PropertyHelper).GetTypeInfo().GetDeclaredMethod(nameof(CallNullSafePropertyGetter));
-
-        private static readonly MethodInfo CallNullSafePropertyGetterByReferenceOpenGenericMethod =
-            typeof(PropertyHelper).GetTypeInfo().GetDeclaredMethod(nameof(CallNullSafePropertyGetterByReference));
-
-        private static readonly MethodInfo CallPropertySetterOpenGenericMethod =
-            typeof(PropertyHelper).GetTypeInfo().GetDeclaredMethod(nameof(CallPropertySetter));
-
-        // Using an array rather than IEnumerable, as target will be called on the hot path numerous times.
-        private static readonly ConcurrentDictionary<Type, PropertyHelper[]> PropertiesCache =
-            new ConcurrentDictionary<Type, PropertyHelper[]>();
-
-        private static readonly ConcurrentDictionary<Type, PropertyHelper[]> VisiblePropertiesCache =
-            new ConcurrentDictionary<Type, PropertyHelper[]>();
-
-        private Action<object, object> _valueSetter;
-
-        /// <summary>
-        /// Initializes a fast <see cref="PropertyHelper"/>.
-        /// This constructor does not cache the helper. For caching, use <see cref="GetProperties(object)"/>.
-        /// </summary>
-        public PropertyHelper(PropertyInfo property)
+        public class PropertyName
         {
-            if (property == null)
+            public PropertyName(string name, object index)
             {
-                throw new ArgumentNullException(nameof(property));
+                Name = name;
+                Index = index;
             }
-
-            Property = property;
-            Name = property.Name;
-            ValueGetter = MakeFastPropertyGetter(property);
+            public string Name { get; set; }
+            public object Index { get; set; }
         }
-
-        /// <summary>
-        /// Gets the backing <see cref="PropertyInfo"/>.
-        /// </summary>
-        public PropertyInfo Property { get; }
-
-        /// <summary>
-        /// Gets (or sets in derived types) the property name.
-        /// </summary>
-        public virtual string Name { get; protected set; }
-
-        /// <summary>
-        /// Gets the property value getter.
-        /// </summary>
-        public Func<object, object> ValueGetter { get; }
-
-        /// <summary>
-        /// Gets the property value setter.
-        /// </summary>
-        public Action<object, object> ValueSetter
+        static List<Func<string, PropertyName>> _arrayPropertyParsers = new List<Func<string, PropertyName>>
         {
-            get
+            static propertyExpression =>
             {
-                if (_valueSetter == null)
+                var numberMatch = RegexOnlyNumberIndex().Match(propertyExpression);
+                if (numberMatch.Success)
                 {
-                    _valueSetter = MakeFastPropertySetter(Property);
+                    return new PropertyName(null, int.Parse(numberMatch.Groups[1].Value));
                 }
-
-                return _valueSetter;
-            }
-        }
-
-        /// <summary>
-        /// Returns the property value for the specified <paramref name="instance"/>.
-        /// </summary>
-        /// <param name="instance">The object whose property value will be returned.</param>
-        /// <returns>The property value.</returns>
-        public object GetValue(object instance)
-        {
-            return ValueGetter(instance);
-        }
-
-        /// <summary>
-        /// Sets the property value for the specified <paramref name="instance" />.
-        /// </summary>
-        /// <param name="instance">The object whose property value will be set.</param>
-        /// <param name="value">The property value.</param>
-        public void SetValue(object instance, object value)
-        {
-            ValueSetter(instance, value);
-        }
-
-        /// <summary>
-        /// Creates and caches fast property helpers that expose getters for every public get property on the
-        /// underlying type.
-        /// </summary>
-        /// <param name="instance">the instance to extract property accessors for.</param>
-        /// <returns>a cached array of all public property getters from the underlying type of target instance.
-        /// </returns>
-        public static PropertyHelper[] GetProperties(object instance)
-        {
-            return GetProperties(instance.GetType());
-        }
-
-        /// <summary>
-        /// Creates and caches fast property helpers that expose getters for every public get property on the
-        /// specified type.
-        /// </summary>
-        /// <param name="type">the type to extract property accessors for.</param>
-        /// <returns>a cached array of all public property getters from the type of target instance.
-        /// </returns>
-        public static PropertyHelper[] GetProperties(Type type)
-        {
-            return GetProperties(type, CreateInstance, PropertiesCache);
-        }
-
-        /// <summary>
-        /// <para>
-        /// Creates and caches fast property helpers that expose getters for every non-hidden get property
-        /// on the specified type.
-        /// </para>
-        /// <para>
-        /// <see cref="M:GetVisibleProperties"/> excludes properties defined on base types that have been
-        /// hidden by definitions using the <c>new</c> keyword.
-        /// </para>
-        /// </summary>
-        /// <param name="instance">The instance to extract property accessors for.</param>
-        /// <returns>
-        /// A cached array of all public property getters from the instance's type.
-        /// </returns>
-        public static PropertyHelper[] GetVisibleProperties(object instance)
-        {
-            return GetVisibleProperties(instance.GetType(), CreateInstance, PropertiesCache, VisiblePropertiesCache);
-        }
-
-        /// <summary>
-        /// <para>
-        /// Creates and caches fast property helpers that expose getters for every non-hidden get property
-        /// on the specified type.
-        /// </para>
-        /// <para>
-        /// <see cref="M:GetVisibleProperties"/> excludes properties defined on base types that have been
-        /// hidden by definitions using the <c>new</c> keyword.
-        /// </para>
-        /// </summary>
-        /// <param name="type">The type to extract property accessors for.</param>
-        /// <returns>
-        /// A cached array of all public property getters from the type.
-        /// </returns>
-        public static PropertyHelper[] GetVisibleProperties(Type type)
-        {
-            return GetVisibleProperties(type, CreateInstance, PropertiesCache, VisiblePropertiesCache);
-        }
-
-        /// <summary>
-        /// Creates a single fast property getter. The result is not cached.
-        /// </summary>
-        /// <param name="propertyInfo">propertyInfo to extract the getter for.</param>
-        /// <returns>a fast getter.</returns>
-        /// <remarks>
-        /// This method is more memory efficient than a dynamically compiled lambda, and about the
-        /// same speed.
-        /// </remarks>
-        public static Func<object, object> MakeFastPropertyGetter(PropertyInfo propertyInfo)
-        {
-            Debug.Assert(propertyInfo != null);
-
-            return MakeFastPropertyGetter(
-                propertyInfo,
-                CallPropertyGetterOpenGenericMethod,
-                CallPropertyGetterByReferenceOpenGenericMethod);
-        }
-
-        /// <summary>
-        /// Creates a single fast property getter which is safe for a null input object. The result is not cached.
-        /// </summary>
-        /// <param name="propertyInfo">propertyInfo to extract the getter for.</param>
-        /// <returns>a fast getter.</returns>
-        /// <remarks>
-        /// This method is more memory efficient than a dynamically compiled lambda, and about the
-        /// same speed.
-        /// </remarks>
-        public static Func<object, object> MakeNullSafeFastPropertyGetter(PropertyInfo propertyInfo)
-        {
-            Debug.Assert(propertyInfo != null);
-
-            return MakeFastPropertyGetter(
-                propertyInfo,
-                CallNullSafePropertyGetterOpenGenericMethod,
-                CallNullSafePropertyGetterByReferenceOpenGenericMethod);
-        }
-
-        private static Func<object, object> MakeFastPropertyGetter(
-            PropertyInfo propertyInfo,
-            MethodInfo propertyGetterWrapperMethod,
-            MethodInfo propertyGetterByRefWrapperMethod)
-        {
-            Debug.Assert(propertyInfo != null);
-
-            // Must be a generic method with a Func<,> parameter
-            Debug.Assert(propertyGetterWrapperMethod != null);
-            Debug.Assert(propertyGetterWrapperMethod.IsGenericMethodDefinition);
-            Debug.Assert(propertyGetterWrapperMethod.GetParameters().Length == 2);
-
-            // Must be a generic method with a ByRefFunc<,> parameter
-            Debug.Assert(propertyGetterByRefWrapperMethod != null);
-            Debug.Assert(propertyGetterByRefWrapperMethod.IsGenericMethodDefinition);
-            Debug.Assert(propertyGetterByRefWrapperMethod.GetParameters().Length == 2);
-
-            var getMethod = propertyInfo.GetMethod;
-            Debug.Assert(getMethod != null);
-            Debug.Assert(!getMethod.IsStatic);
-            Debug.Assert(getMethod.GetParameters().Length == 0);
-
-            // Instance methods in the CLR can be turned into static methods where the first parameter
-            // is open over "target". This parameter is always passed by reference, so we have a code
-            // path for value types and a code path for reference types.
-            if (getMethod.DeclaringType.GetTypeInfo().IsValueType)
+                return null;
+            },
+            static propertyExpression =>
             {
-                // Create a delegate (ref TDeclaringType) -> TValue
-                return MakeFastPropertyGetter(
-                    typeof(ByRefFunc<,>),
-                    getMethod,
-                    propertyGetterByRefWrapperMethod);
-            }
-            else
-            {
-                // Create a delegate TDeclaringType -> TValue
-                return MakeFastPropertyGetter(
-                    typeof(Func<,>),
-                    getMethod,
-                    propertyGetterWrapperMethod);
-            }
-        }
-
-        private static Func<object, object> MakeFastPropertyGetter(
-            Type openGenericDelegateType,
-            MethodInfo propertyGetMethod,
-            MethodInfo openGenericWrapperMethod)
-        {
-            var typeInput = propertyGetMethod.DeclaringType;
-            var typeOutput = propertyGetMethod.ReturnType;
-
-            var delegateType = openGenericDelegateType.MakeGenericType(typeInput, typeOutput);
-            var propertyGetterDelegate = propertyGetMethod.CreateDelegate(delegateType);
-
-            var wrapperDelegateMethod = openGenericWrapperMethod.MakeGenericMethod(typeInput, typeOutput);
-            var accessorDelegate = wrapperDelegateMethod.CreateDelegate(
-                typeof(Func<object, object>),
-                propertyGetterDelegate);
-
-            return (Func<object, object>)accessorDelegate;
-        }
-
-        /// <summary>
-        /// Creates a single fast property setter for reference types. The result is not cached.
-        /// </summary>
-        /// <param name="propertyInfo">propertyInfo to extract the setter for.</param>
-        /// <returns>a fast getter.</returns>
-        /// <remarks>
-        /// This method is more memory efficient than a dynamically compiled lambda, and about the
-        /// same speed. This only works for reference types.
-        /// </remarks>
-        public static Action<object, object> MakeFastPropertySetter(PropertyInfo propertyInfo)
-        {
-            Debug.Assert(propertyInfo != null);
-            Debug.Assert(!propertyInfo.DeclaringType.GetTypeInfo().IsValueType);
-
-            var setMethod = propertyInfo.SetMethod;
-            Debug.Assert(setMethod != null);
-            Debug.Assert(!setMethod.IsStatic);
-            Debug.Assert(setMethod.ReturnType == typeof(void));
-            var parameters = setMethod.GetParameters();
-            Debug.Assert(parameters.Length == 1);
-
-            // Instance methods in the CLR can be turned into static methods where the first parameter
-            // is open over "target". This parameter is always passed by reference, so we have a code
-            // path for value types and a code path for reference types.
-            var typeInput = setMethod.DeclaringType;
-            var parameterType = parameters[0].ParameterType;
-
-            // Create a delegate TDeclaringType -> { TDeclaringType.Property = TValue; }
-            var propertySetterAsAction =
-                setMethod.CreateDelegate(typeof(Action<,>).MakeGenericType(typeInput, parameterType));
-            var callPropertySetterClosedGenericMethod =
-                CallPropertySetterOpenGenericMethod.MakeGenericMethod(typeInput, parameterType);
-            var callPropertySetterDelegate =
-                callPropertySetterClosedGenericMethod.CreateDelegate(
-                    typeof(Action<object, object>), propertySetterAsAction);
-
-            return (Action<object, object>)callPropertySetterDelegate;
-        }
-
-        /// <summary>
-        /// Given an object, adds each instance property with a public get method as a key and its
-        /// associated value to a dictionary.
-        ///
-        /// If the object is already an <see cref="IDictionary{String, Object}"/> instance, then a copy
-        /// is returned.
-        /// </summary>
-        /// <remarks>
-        /// The implementation of PropertyHelper will cache the property accessors per-type. This is
-        /// faster when the the same type is used multiple times with ObjectToDictionary.
-        /// </remarks>
-        public static IDictionary<string, object> ObjectToDictionary(object value)
-        {
-            var dictionary = value as IDictionary<string, object>;
-            if (dictionary != null)
-            {
-                return new Dictionary<string, object>(dictionary, StringComparer.OrdinalIgnoreCase);
-            }
-
-            dictionary = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-            if (value != null)
-            {
-                foreach (var helper in GetProperties(value))
+                var numberMatch = RegexOnlyNameIndex().Match(propertyExpression);
+                if (numberMatch.Success)
                 {
-                    dictionary[helper.Name] = helper.GetValue(value);
+                    return new PropertyName(null, numberMatch.Groups[1].Value);
                 }
-            }
-
-            return dictionary;
-        }
-
-        private static PropertyHelper CreateInstance(PropertyInfo property)
-        {
-            return new PropertyHelper(property);
-        }
-
-        // Called via reflection
-        private static object CallPropertyGetter<TDeclaringType, TValue>(
-            Func<TDeclaringType, TValue> getter,
-            object target)
-        {
-            return getter((TDeclaringType)target);
-        }
-
-        // Called via reflection
-        private static object CallPropertyGetterByReference<TDeclaringType, TValue>(
-            ByRefFunc<TDeclaringType, TValue> getter,
-            object target)
-        {
-            var unboxed = (TDeclaringType)target;
-            return getter(ref unboxed);
-        }
-
-        // Called via reflection
-        private static object CallNullSafePropertyGetter<TDeclaringType, TValue>(
-            Func<TDeclaringType, TValue> getter,
-            object target)
-        {
-            if (target == null)
-            {
                 return null;
-            }
-
-            return getter((TDeclaringType)target);
-        }
-
-        // Called via reflection
-        private static object CallNullSafePropertyGetterByReference<TDeclaringType, TValue>(
-            ByRefFunc<TDeclaringType, TValue> getter,
-            object target)
-        {
-            if (target == null)
+            },
+            static propertyExpression =>
             {
-                return null;
-            }
-
-            var unboxed = (TDeclaringType)target;
-            return getter(ref unboxed);
-        }
-
-        private static void CallPropertySetter<TDeclaringType, TValue>(
-            Action<TDeclaringType, TValue> setter,
-            object target,
-            object value)
-        {
-            setter((TDeclaringType)target, (TValue)value);
-        }
-
-        protected static PropertyHelper[] GetVisibleProperties(
-            Type type,
-            Func<PropertyInfo, PropertyHelper> createPropertyHelper,
-            ConcurrentDictionary<Type, PropertyHelper[]> allPropertiesCache,
-            ConcurrentDictionary<Type, PropertyHelper[]> visiblePropertiesCache)
-        {
-            PropertyHelper[] result;
-            if (visiblePropertiesCache.TryGetValue(type, out result))
-            {
-                return result;
-            }
-
-            // The simple and common case, this is normal POCO object - no need to allocate.
-            var allPropertiesDefinedOnType = true;
-            var allProperties = GetProperties(type, createPropertyHelper, allPropertiesCache);
-            foreach (var propertyHelper in allProperties)
-            {
-                if (propertyHelper.Property.DeclaringType != type)
+                var numberMatch = RegexNumberIndex().Match(propertyExpression);
+                if (numberMatch.Success)
                 {
-                    allPropertiesDefinedOnType = false;
+                    return new PropertyName(numberMatch.Groups[1].Value, int.Parse(numberMatch.Groups[2].Value));
+                }
+                return null;
+            },
+            static propertyExpression =>
+            {
+                var numberMatch = RegexNameIndex().Match(propertyExpression);
+                if (numberMatch.Success)
+                {
+                    return new PropertyName(numberMatch.Groups[1].Value, numberMatch.Groups[2].Value);
+                }
+                return null;
+            },
+            static propertyExpression => new PropertyName(propertyExpression, null)
+        };
+
+
+        public static PropertyName[] ParseProperties(string propertyExpression)
+        {
+            var propertyDeepArray = propertyExpression.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+            PropertyName[] properties = new PropertyName[propertyDeepArray.Length];
+            for (int i = 0; i < propertyDeepArray.Length; i++)
+            {
+                string item = propertyDeepArray[i];
+                foreach (var parseProperty in _arrayPropertyParsers)
+                {
+                    var propertyResult = parseProperty(item);
+                    if (propertyResult == null) continue;
+
+                    properties[i] = propertyResult;
                     break;
                 }
             }
+            return properties;
+        }
 
-            if (allPropertiesDefinedOnType)
+        public static object GetValue(object inputValue, string propertyExpression)
+        {
+            if (inputValue is null)
             {
-                result = allProperties;
-                visiblePropertiesCache.TryAdd(type, result);
-                return result;
+                throw new ArgumentNullException(nameof(inputValue));
             }
 
-            // There's some inherited properties here, so we need to check for hiding via 'new'.
-            var filteredProperties = new List<PropertyHelper>(allProperties.Length);
-            foreach (var propertyHelper in allProperties)
+            if (propertyExpression is null)
             {
-                var declaringType = propertyHelper.Property.DeclaringType;
-                if (declaringType == type)
+                throw new ArgumentNullException(nameof(propertyExpression));
+            }
+
+            object resultValue = inputValue;
+
+            foreach (var parseProperty in ParseProperties(propertyExpression))
+            {
+                resultValue = GetPropertyValue(resultValue, parseProperty);
+            }
+
+            return resultValue;
+        }
+
+        public static void SetValue(object inputValue, string propertyExpression, object value)
+        {
+            if (inputValue is null)
+            {
+                throw new ArgumentNullException(nameof(inputValue));
+            }
+
+            if (propertyExpression is null)
+            {
+                throw new ArgumentNullException(nameof(propertyExpression));
+            }
+
+            var propertites = ParseProperties(propertyExpression);
+
+            object resultValue = inputValue;
+            for (int i = 0; i < propertites.Length; i++)
+            {
+                var propertyResult = propertites[i];
+
+                if (i < propertites.Length - 1)
                 {
-                    filteredProperties.Add(propertyHelper);
+                    resultValue = GetPropertyValue(resultValue, propertyResult);
                     continue;
                 }
 
-                // If this property was declared on a base type then look for the definition closest to the
-                // the type to see if we should include it.
-                var ignoreProperty = false;
-
-                // Walk up the hierarchy until we find the type that actally declares this
-                // PropertyInfo.
-                var currentTypeInfo = type.GetTypeInfo();
-                var declaringTypeInfo = declaringType.GetTypeInfo();
-                while (currentTypeInfo != null && currentTypeInfo != declaringTypeInfo)
+                if (propertyResult.Index == null)
                 {
-                    // We've found a 'more proximal' public definition
-                    var declaredProperty = currentTypeInfo.GetDeclaredProperty(propertyHelper.Name);
-                    if (declaredProperty != null)
+                    var setter = GetPropertySetterDelegate(resultValue.GetType(), propertyResult.Name);
+                    setter(resultValue, value);
+                }
+                else
+                {
+                    resultValue = GetPropertyValue(resultValue, new PropertyName(propertyResult.Name, null));
+
+                    var valueType = resultValue.GetType();
+                    Action<object, object, object> setter = null;
+                    if (_indexSetters.TryGetValue(valueType, out setter))
                     {
-                        ignoreProperty = true;
-                        break;
+                        setter(resultValue, propertyResult.Index, value);
+                        return;
                     }
+                    if (valueType.IsArray)
+                    {
+                        setter = GetIndexSetterDelegate(valueType, propertyResult.Index.GetType(), null, valueType.GetElementType());
+                    }
+                    else
+                    {
+                        var indexProperty = valueType.GetProperty("Item");
+                        if (indexProperty != null && indexProperty.GetIndexParameters().Length > 0)
+                        {
+                            setter = GetIndexSetterDelegate(resultValue.GetType(), propertyResult.Index.GetType(), indexProperty, null);
+                        }
+                    }
+                    if (setter == null) return;
 
-                    currentTypeInfo = currentTypeInfo.BaseType?.GetTypeInfo();
+                    setter(resultValue, propertyResult.Index, value);
                 }
 
-                if (!ignoreProperty)
-                {
-                    filteredProperties.Add(propertyHelper);
-                }
             }
-
-            result = filteredProperties.ToArray();
-            visiblePropertiesCache.TryAdd(type, result);
-            return result;
         }
 
-        protected static PropertyHelper[] GetProperties(
-            Type type,
-            Func<PropertyInfo, PropertyHelper> createPropertyHelper,
-            ConcurrentDictionary<Type, PropertyHelper[]> cache)
+        private static object GetPropertyValue(object resultValue, PropertyName propertyResult)
         {
-            // Unwrap nullable types. This means Nullable<T>.Value and Nullable<T>.HasValue will not be
-            // part of the sequence of properties returned by this method.
-            type = Nullable.GetUnderlyingType(type) ?? type;
+            object result = null;
 
-            PropertyHelper[] helpers;
-            if (!cache.TryGetValue(type, out helpers))
+            if (propertyResult.Name.IsNotNullAndWhiteSpace())
             {
-                // We avoid loading indexed properties using the Where statement.
-                var properties = type.GetRuntimeProperties().Where(IsInterestingProperty);
+                var valueGetter = GetPropertyGetterDelegate(resultValue.GetType(), propertyResult.Name);
+                if (valueGetter == null) return null;
 
-                var typeInfo = type.GetTypeInfo();
-                if (typeInfo.IsInterface)
-                {
-                    // Reflection does not return information about inherited properties on the interface itself.
-                    properties = properties.Concat(typeInfo.ImplementedInterfaces.SelectMany(
-                        interfaceType => interfaceType.GetRuntimeProperties().Where(IsInterestingProperty)));
-                }
+                result = valueGetter(resultValue);
 
-                helpers = properties.Select(p => createPropertyHelper(p)).ToArray();
-                cache.TryAdd(type, helpers);
+                if (result == null) return null;
+
+                if (propertyResult.Index == null) return result;
+            }
+            else if (propertyResult.Index != null)
+            {
+                result = resultValue;
             }
 
-            return helpers;
+
+            var valueType = result.GetType();
+            if (_indexGetters.TryGetValue(valueType, out var getter))
+            {
+                return getter(result, propertyResult.Index);
+            }
+
+            if (valueType.IsArray)
+            {
+                Func<object, object, object> indexAccessor = GetIndexGetterDelegate(valueType, propertyResult.Index.GetType(), null);
+                return indexAccessor(result, propertyResult.Index);
+            }
+            else
+            {
+                var indexProperty = valueType.GetProperty("Item");
+                if (indexProperty != null && indexProperty.GetIndexParameters().Length > 0)
+                {
+                    Func<object, object, object> indexAccessor = GetIndexGetterDelegate(valueType, propertyResult.Index.GetType(), indexProperty);
+                    return indexAccessor(result, propertyResult.Index);
+                }
+            }
+            return null;
         }
 
-        // Indexed properties are not useful (or valid) for grabbing properties off an object.
-        private static bool IsInterestingProperty(PropertyInfo property)
+        private static Func<object, object> GetPropertyGetterDelegate(Type valueType, string propertyName)
         {
-            return property.GetIndexParameters().Length == 0 &&
-                property.GetMethod != null &&
-                property.GetMethod.IsPublic &&
-                !property.GetMethod.IsStatic;
+            var typeDelegates = _propertyGetters.GetOrAdd(valueType, t => new ConcurrentDictionary<string, Func<object, object>>());
+
+            return typeDelegates.GetOrAdd(propertyName, p =>
+            {
+                var objPara = Expression.Parameter(typeof(object), "m");
+                var paraToTypeValue = Expression.Convert(objPara, valueType);
+                Expression expProperty = Expression.Property(paraToTypeValue, propertyName);
+                Expression propertyToObject = Expression.Convert(expProperty, typeof(object));
+                var propertyDelegateExpression = Expression.Lambda<Func<object, object>>(propertyToObject, objPara);
+                return propertyDelegateExpression.CompileFast();
+            });
+        }
+
+        private static Func<object, object, object> GetIndexGetterDelegate(Type valueType, Type indexType, PropertyInfo indexProperty)
+        {
+            return _indexGetters.GetOrAdd(valueType, v =>
+            {
+                var parameter = Expression.Parameter(typeof(object), "m");
+                var parameterKey = Expression.Parameter(typeof(object), "k");
+                var indexExp = Expression.MakeIndex(Expression.Convert(parameter, valueType), indexProperty, new[] { Expression.Convert(parameterKey, indexType) });
+                var dictionaryAccessor = Expression.Lambda<Func<object, object, object>>(Expression.Convert(indexExp, typeof(object)), new[] { parameter, parameterKey }).CompileFast();
+                return dictionaryAccessor;
+            });
+
+        }
+
+        private static Action<object, object> GetPropertySetterDelegate(Type targetObjectType, string propertyName)
+        {
+            var typeDelegates = _propertySetters.GetOrAdd(targetObjectType, t => new ConcurrentDictionary<string, Action<object, object>>());
+
+            return typeDelegates.GetOrAdd(propertyName, p =>
+            {//build m.Name=v
+                var objPara = Expression.Parameter(typeof(object), "m");
+                var valuePara = Expression.Parameter(typeof(object), "v");
+                var paraToTypeValue = Expression.Convert(objPara, targetObjectType);
+                var propertyInfo = targetObjectType.GetProperty(propertyName);
+                var expProperty = Expression.Property(paraToTypeValue, propertyInfo);
+                var setValueExp = Expression.Assign(expProperty, Expression.Convert(valuePara, propertyInfo.PropertyType));
+                var lambda = Expression.Lambda<Action<object, object>>(setValueExp, objPara, valuePara);
+                return lambda.CompileFast();
+            });
+        }
+        private static Action<object, object, object> GetIndexSetterDelegate(Type arrayType, Type indexType, PropertyInfo indexProperty, Type valueType)
+        {
+            return _indexSetters.GetOrAdd(arrayType, v =>
+            {//build m[0]=v;
+                var parameter = Expression.Parameter(typeof(object), "m");
+                var parameterKey = Expression.Parameter(typeof(object), "k");
+                var valuePara = Expression.Parameter(typeof(object), "v");
+                var indexExp = Expression.MakeIndex(Expression.Convert(parameter, arrayType), indexProperty, new[] { Expression.Convert(parameterKey, indexType) });
+                var lambda = Expression.Assign(indexExp, Expression.Convert(valuePara, indexProperty?.PropertyType ?? valueType));
+                return Expression.Lambda<Action<object, object, object>>(lambda, parameter, parameterKey, valuePara).CompileFast();
+            });
+
         }
     }
 }

@@ -1,4 +1,10 @@
-﻿using Newtonsoft.Json;
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
+using Easy.Constant;
+using Easy.RepositoryPattern;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -8,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace ZKEACMS.Widget
 {
-    [Table("CMS_WidgetBase")]
+    [DataTable("CMS_WidgetBase")]
     public sealed class WidgetBasePart : WidgetBase
     {
 
@@ -41,12 +47,17 @@ namespace ZKEACMS.Widget
             get; set;
         }
         [NotMapped]
-        public override string LayoutID
+        public override string LayoutId
         {
             get; set;
         }
         [NotMapped]
-        public override string PageID
+        public override string PageId
+        {
+            get; set;
+        }
+        [NotMapped]
+        public override int? RuleID
         {
             get; set;
         }
@@ -86,7 +97,7 @@ namespace ZKEACMS.Widget
             get; set;
         }
         [NotMapped]
-        public override string ZoneID
+        public override string ZoneId
         {
             get; set;
         }
@@ -170,12 +181,12 @@ namespace ZKEACMS.Widget
             get; set;
         }
         [NotMapped, JsonIgnore]
-        public override string LayoutID
+        public override string LayoutId
         {
             get; set;
         }
         [NotMapped, JsonIgnore]
-        public override string PageID
+        public override string PageId
         {
             get; set;
         }
@@ -215,7 +226,7 @@ namespace ZKEACMS.Widget
             get; set;
         }
         [NotMapped, JsonIgnore]
-        public override string ZoneID
+        public override string ZoneId
         {
             get; set;
         }
@@ -264,8 +275,21 @@ namespace ZKEACMS.Widget
         {
             get; set;
         }
+
         [NotMapped, JsonIgnore]
         public override string ExtendData
+        {
+            get; set;
+        }
+
+        [NotMapped, JsonIgnore]
+        public override ActionType? ActionType
+        {
+            get; set;
+        }
+
+        [NotMapped, JsonIgnore]
+        public override int? RuleID
         {
             get; set;
         }

@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.Mvc.RazorPages;
 using Easy.Mvc.Resource.Enums;
 using System;
@@ -14,10 +17,8 @@ namespace Easy.Mvc.Resource
 {
     public abstract class ResourceRegister
     {
-        public RazorPage CurrentPage { get; private set; }
-        protected ResourceRegister(RazorPage page, Action<ResourceCollection> onRegisted)
+        protected ResourceRegister(Action<ResourceCollection> onRegisted)
         {
-            this.CurrentPage = page;
             this.OnRegisted = onRegisted;
         }
 
@@ -41,7 +42,7 @@ namespace Easy.Mvc.Resource
         {
             this._page = page;
             _position = position;
-            this._page.StartTagHelperWritingScope(HtmlEncoder.Default);
+            this._page.StartTagHelperWritingScope(page.HtmlEncoder);
             _onRegisted = onRegisted;
         }
 
@@ -57,17 +58,17 @@ namespace Easy.Mvc.Resource
             resource.Name = "Capture-" + partResult.Value.GetHashCode();
             resource.Position = _position;
             _onRegisted(resource);
+            _page = null;
+            _onRegisted = null;
         }
     }
 
     public class ResourceCapture
     {
-        private RazorPage _page;
         private ResourceCollection _resource;
         private Action<ResourceCollection> _onRegisted;
-        public ResourceCapture(RazorPage page, ResourceCollection source, Action<ResourceCollection> onRegisted)
+        public ResourceCapture(ResourceCollection source, Action<ResourceCollection> onRegisted)
         {
-            _page = page;
             _resource = source;
             _onRegisted = onRegisted;
         }
@@ -83,6 +84,7 @@ namespace Easy.Mvc.Resource
                 resources.Add(entity);
             });
             _onRegisted(resources);
+            _onRegisted = null;
         }
         public void AtFoot()
         {
@@ -96,31 +98,34 @@ namespace Easy.Mvc.Resource
                 resources.Add(entity);
             });
             _onRegisted(resources);
+            _onRegisted = null;
         }
     }
 
 
     public class ScriptRegister : ResourceRegister
     {
-        public ScriptRegister(RazorPage page, Action<ResourceCollection> onRegisted) : base(page, onRegisted)
+        private readonly RazorPage _page;
+        public ScriptRegister(RazorPage page, Action<ResourceCollection> onRegisted) : base(onRegisted)
         {
+            _page = page;
         }
 
         public override IDisposable AtHead()
         {
-            return new Capture(this.CurrentPage, ResourcePosition.Head, OnRegisted);
+            return new Capture(_page, ResourcePosition.Head, OnRegisted);
         }
 
         public override IDisposable AtFoot()
         {
-            return new Capture(this.CurrentPage, ResourcePosition.Foot, OnRegisted);
+            return new Capture(_page, ResourcePosition.Foot, OnRegisted);
         }
 
         public override ResourceCapture Reqiured(string name)
         {
-            if (!Resource.ResourceManager.ScriptSource.ContainsKey(name))
-                throw new Exception("找不到名称为“{0}”的相关资源".FormatWith(name));
-            return new ResourceCapture(CurrentPage, Resource.ResourceManager.ScriptSource[name], OnRegisted);
+            if (!ResourceHelper.ScriptSource.ContainsKey(name))
+                throw new Exception("Can't find source:{0}".FormatWith(name));
+            return new ResourceCapture(ResourceHelper.ScriptSource[name], OnRegisted);
         }
 
 
@@ -128,23 +133,27 @@ namespace Easy.Mvc.Resource
 
     public class StyleRegister : ResourceRegister
     {
-        public StyleRegister(RazorPage page, Action<ResourceCollection> onRegisted) : base(page, onRegisted)
+        private readonly RazorPage _page;
+        public StyleRegister(RazorPage page, Action<ResourceCollection> onRegisted) : base(onRegisted)
         {
+            _page = page;
         }
 
         public override IDisposable AtHead()
         {
-            return new Capture(this.CurrentPage, ResourcePosition.Head, OnRegisted);
+            return new Capture(_page, ResourcePosition.Head, OnRegisted);
         }
 
         public override IDisposable AtFoot()
         {
-            return new Capture(this.CurrentPage, ResourcePosition.Foot, OnRegisted);
+            return new Capture(_page, ResourcePosition.Foot, OnRegisted);
         }
 
         public override ResourceCapture Reqiured(string name)
         {
-            return new ResourceCapture(this.CurrentPage, Resource.ResourceManager.StyleSource[name], OnRegisted);
+            if (!ResourceHelper.StyleSource.ContainsKey(name))
+                throw new Exception("Can't find source:{0}".FormatWith(name));
+            return new ResourceCapture(ResourceHelper.StyleSource[name], OnRegisted);
         }
     }
 

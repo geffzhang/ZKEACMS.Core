@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,5 +61,7 @@ namespace Easy.RepositoryPattern
         public int RecordCount { get; set; }
         public string OrderBy { get; set; }
         public string OrderByDescending { get; set; }
+        public string ThenBy { get; set; }
+        public string ThenByDescending { get; set; }
     }
 }

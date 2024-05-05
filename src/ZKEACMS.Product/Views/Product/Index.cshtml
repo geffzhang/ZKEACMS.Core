@@ -1,4 +1,4 @@
-﻿@using ZKEACMS.Product.Models
+@using ZKEACMS.Product.Models
 @model ProductEntity
 @{
     Style.Reqiured("dataTable").AtHead();
@@ -7,7 +7,11 @@
     Script.Reqiured("datepicker").AtFoot();
     Style.Reqiured("datepicker").AtHead();
 }
-<div id="toolBar">
-    <a href="@Url.Action("Create")" class="btn btn-primary btn-xs">新建</a>
+<div class="grid-component">
+    @Html.SearchTerms(Authorizer.Authorize(ZKEACMS.Product.PermissionKeys.ManageProduct))
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <grid delete-able="Authorizer.Authorize(ZKEACMS.Product.PermissionKeys.ManageProduct)" edit-able="Authorizer.Authorize(ZKEACMS.Product.PermissionKeys.ManageProduct)"></grid>
+        </div>
+    </div>
 </div>
-<grid></grid>

@@ -1,8 +1,7 @@
-/* 
- * http://www.zkea.net/ 
- * Copyright 2016 ZKEASOFT 
- * http://www.zkea.net/licenses 
- */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using Easy.Storage;
 using Easy.Extend;
@@ -15,37 +14,15 @@ namespace Easy.Mvc.Extend
 {
     public static class ExHttpRequest
     {
-        const string UploadFolder = "UpLoad";
-        const string ImageFolder = "Images";
-        const string FileFolder = "Files";
-
-        private static string ChangeToWebPath(HttpRequest request, string path)
-        {
-            return path.Replace(request.MapPath("~/"), "~").Replace("\\", "/");
-        }
-        public static string GetUploadPath(this HttpRequest request, string folder = ImageFolder)
-        {
-            var environment = request.HttpContext.RequestServices.GetService<IHostingEnvironment>();
-            var path = Path.Combine(new string[] { environment.WebRootPath, UploadFolder, folder, DateTime.Now.ToString("yyyyMM") });
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-                var storage = request.HttpContext.RequestServices.GetService<IStorageService>();
-                if (storage != null)
-                {
-                    storage.CreateFolder(path);
-                }
-            }
-            return path;
-        }
         public static string MapPath(this HttpRequest request, string path)
         {
-            var environment = request.HttpContext.RequestServices.GetService<IHostingEnvironment>();
-            return Path.Combine(environment.WebRootPath, path.Replace("~/", "").ToFilePath());
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException($"\"{nameof(path)}\" can not be null.", nameof(path));
+            }
+
+            var environment = request.HttpContext.RequestServices.GetService<IWebHostEnvironment>();
+            return Path.Combine(environment.WebRootPath, path.TrimStart('~').TrimStart('/').ToFilePath());
         }
         /// <summary>
         /// 保存图片到UpLoad/Images
@@ -56,49 +33,16 @@ namespace Easy.Mvc.Extend
         {
             if (request.Form.Files.Count > 0 && request.Form.Files[0].Length > 0)
             {
-                string path = request.GetUploadPath(ImageFolder);
                 string fileName = request.Form.Files[0].FileName;
                 string ext = Path.GetExtension(fileName);
                 if (Common.IsImage(ext))
                 {
-                    path = Path.Combine(path, string.Format("{0}{1}", Guid.NewGuid().ToString("N"), ext));
-                    request.Form.Files[0].SaveAs(path);
-                    var storage = request.HttpContext.RequestServices.GetService<IStorageService>();
-                    if (storage != null)
+                    IStorage storage = request.HttpContext.RequestServices.GetService<IStorage>();
+                    using (Stream stream = request.Form.Files[0].OpenReadStream())
                     {
-                        string filePath = storage.SaveFile(path);
-                        if (filePath.IsNotNullAndWhiteSpace())
-                        {
-                            return filePath;
-                        }
+                        return storage.SaveFile(stream, string.Format("{0}{1}", new Easy.IDGenerator().CreateStringId(), ext));
                     }
-                    return ChangeToWebPath(request, path);
-                }
-            }
-            return string.Empty;
-        }
-        public static string SaveImage(this HttpRequest request, string name)
-        {
-            if (request.Form.Files.Count > 0 && request.Form.Files[name].Length > 0)
-            {
-                string path = request.GetUploadPath(ImageFolder);
-                string fileName = request.Form.Files[name].FileName;
-                string ext = Path.GetExtension(fileName);
-                if (Common.IsImage(ext))
-                {
-                    fileName = string.Format("{0}{1}", Guid.NewGuid().ToString("N"), ext);
-                    path += fileName;
-                    request.Form.Files[name].SaveAs(path);
-                    var storage = request.HttpContext.RequestServices.GetService<IStorageService>();
-                    if (storage != null)
-                    {
-                        string filePath = storage.SaveFile(path);
-                        if (filePath.IsNotNullAndWhiteSpace())
-                        {
-                            return filePath;
-                        }
-                    }
-                    return ChangeToWebPath(request, path);
+
                 }
             }
             return string.Empty;
@@ -112,51 +56,16 @@ namespace Easy.Mvc.Extend
         {
             if (request.Form.Files.Count > 0 && request.Form.Files[0].Length > 0)
             {
-                string path = request.GetUploadPath(FileFolder);
                 string fileName = request.Form.Files[0].FileName;
                 string ext = Path.GetExtension(fileName);
-                if (Common.FileCanUp(ext))
+                if (Common.IsExecuteableFile(ext)) return string.Empty;
+
+                IStorage storage = request.HttpContext.RequestServices.GetService<IStorage>();
+                using (Stream stream = request.Form.Files[0].OpenReadStream())
                 {
-                    fileName = string.Format("{0}{1}", Guid.NewGuid().ToString("N"), ext);
-                    path += fileName;
-                    request.Form.Files[0].SaveAs(path);
-                    var storage = request.HttpContext.RequestServices.GetService<IStorageService>();
-                    if (storage != null)
-                    {
-                        string filePath = storage.SaveFile(path);
-                        if (filePath.IsNotNullAndWhiteSpace())
-                        {
-                            return filePath;
-                        }
-                    }
-                    return ChangeToWebPath(request, path);
+                    return storage.SaveFile(stream, string.Format("{0}{1}", new Easy.IDGenerator().CreateStringId(), ext));
                 }
-            }
-            return string.Empty;
-        }
-        public static string SaveFile(this HttpRequest request, string name)
-        {
-            if (request.Form.Files.Count > 0 && request.Form.Files[0].Length > 0)
-            {
-                string path = request.GetUploadPath(FileFolder);
-                string fileName = request.Form.Files[0].FileName;
-                string ext = Path.GetExtension(fileName);
-                if (Common.FileCanUp(ext))
-                {
-                    fileName = string.Format("{0}{1}", Guid.NewGuid().ToString("N"), ext);
-                    path += fileName;
-                    request.Form.Files[0].SaveAs(path);
-                    var storage = request.HttpContext.RequestServices.GetService<IStorageService>();
-                    if (storage != null)
-                    {
-                        string filePath = storage.SaveFile(path);
-                        if (filePath.IsNotNullAndWhiteSpace())
-                        {
-                            return filePath;
-                        }
-                    }
-                    return ChangeToWebPath(request, path);
-                }
+
             }
             return string.Empty;
         }
@@ -168,11 +77,17 @@ namespace Easy.Mvc.Extend
             {
                 File.Delete(file);
             }
-            var storage = request.HttpContext.RequestServices.GetService<IStorageService>();
-            if (storage != null)
-            {
-                storage.DeleteFile(file);
-            }
+        }
+
+        public static string GetAbsoluteUrl(this HttpRequest request)
+        {
+            return request.Path.Value + request.QueryString;
+        }
+        public static string GetReferer(this HttpRequest request)
+        {
+            string uri = request.Headers["Referer"].ToString();
+            if (uri.IsNotNullAndWhiteSpace() && !Uri.TryCreate(uri, UriKind.Absolute, out _)) return null;
+            return uri;
         }
     }
 }

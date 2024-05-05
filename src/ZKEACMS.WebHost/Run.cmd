@@ -1,5 +1,5 @@
 @echo off
-echo ASPNETCORE_ENVIRONMENT=Development
+echo Starting...
 set ASPNETCORE_ENVIRONMENT=Development
-dotnet run
-@pause
+set ASPNETCORE_URLS=http://localhost:5000
+dotnet bin/Debug/net8.0/ZKEACMS.WebHost.dll

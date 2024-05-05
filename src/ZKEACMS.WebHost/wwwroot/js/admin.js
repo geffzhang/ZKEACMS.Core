@@ -1,23 +1,28 @@
-﻿/*!
- * http://www.zkea.net/
- * Copyright 2017 ZKEASOFT
- * http://www.zkea.net/licenses
- */
+﻿/*! http://www.zkea.net/
+ * Copyright (c) ZKEASOFT. All rights reserved.
+ * http://www.zkea.net/licenses */
 
 $(function () {
-    var mainBody = document.querySelector("#main-body");
-    if (mainBody) {
-        mainBody.style = "height:" + (window.innerHeight - 80) + "px";
-    }
     $(".accordion-group>a").click(function () {
-        if ($(this).nextAll(".accordion-inner").hasClass("active")) {
-            return false;
+        var className = 'active';
+        var a = $(this);
+        var div_inner = a.nextAll(".accordion-inner");
+        if (a.hasClass(className)) {
+            a.removeClass(className);
+            div_inner.hide(200);
         }
-        $(this).parents("ul").find(".accordion-inner.active").removeClass("active").hide(200);
-        $(this).nextAll(".accordion-inner").addClass("active").show(200);
+        else {
+            a.addClass(className);
+            div_inner.show(200);
+        }
+        //if ($(this).nextAll(".accordion-inner").hasClass("active")) {
+        //    return false;
+        //}
+        //$(this).parents("ul").find(".accordion-inner.active").removeClass("active").hide(200);
+        //$(this).nextAll(".accordion-inner").addClass("active").show(200);
         return false;
     });
-    
+
 
     $(document).on("click", ".cancel", function () {
         window.history.back();
@@ -29,50 +34,60 @@ $(function () {
     }).on("click", "input[type=submit]", function () {
         $("#ActionType").val($(this).data("value"));
         return true;
-    }).on("click", ".input-group-collection .add", function () {
-        var index = $(this).siblings(".items").children(".item").size();
-        var namePrefix = $(this).data("name-prefex");
-        var template = $($(this).siblings(".Template").html());
-        $("input,select,area", template).attr("data-val", true).each(function () {
-            var name = $(this).attr("name");
-            if (name) {
-                $(this).attr("name", name.replace(namePrefix, namePrefix + "[" + index + "]"));
-            }
-        });
-        template.find(".ActionType").val($(this).data("value"));
-        $(this).siblings(".items").append(template);
-    }).on("click", ".input-group-collection .delete", function () {
-        $(this).parent().hide();
-        $(this).siblings(".hide").find(".ActionType").val($(this).data("value"));
-    }).on("change", ".input-group-collection .form-control", function () {
-        var actionType = $(".ActionType", $(this).closest(".item"));
-        if (actionType.val() !== "Create") {
-            actionType.val("Update");
-        }
-    }).on("click", ".input-group .glyphicon.glyphicon-search", function () {
+    }).on("click", ".input-group .search", function () {
         var obj = $(this);
         window.top.Easy.ShowUrlWindow({
             url: obj.parent().siblings("input.form-control").data("url"),
-            width: obj.parent().siblings("input.form-control").data("width") || 800,
+            width: obj.parent().siblings("input.form-control").data("width") || window.innerWidth * 0.9,
             onLoad: function (box) {
                 var win = this;
                 $(this.document).find("#confirm").click(function () {
                     var target = obj.parent().siblings("input.form-control");
-                    target.val(win.GetSelected());
+                    var selectValue = win.GetSelected();
+                    if (typeof (selectValue) == "object") {
+                        target.val(selectValue.value);
+                        if (selectValue.additional) {
+                            var form = target.closest("form");
+                            var nameArray = target.attr("name").split('.');
+                            for (var p in selectValue.additional) {
+                                if (selectValue.additional.hasOwnProperty(p)) {
+                                    nameArray[nameArray.length - 1] = p;
+                                    var name = nameArray.join('.');
+                                    $('[name="' + name + '"]', form).val(selectValue.additional[p]);
+                                }
+                            }
+                        }
+                    } else {
+                        target.val(selectValue);
+                    }
                     box.close();
+                    target.trigger("change");
                 });
                 $(this.document).on("click", ".confirm", function () {
                     var target = obj.parent().siblings("input.form-control");
                     target.val($(this).data("result"));
                     box.close();
+                    target.trigger("change");
                 });
             }
         });
-    }).on("click", ".form-group select#ZoneID", function () {
+    }).on("click", ".form-group select#ZoneId", function () {
         var obj = $(this);
-        var url = "/admin/Layout/SelectZone?layoutId=" + $(".hide #LayoutID").val() + "&pageId=" + $(".hide #PageID").val() + "&zoneId=" + obj.val();
+        if (obj.val() == "ZONE-X") {
+            return;
+        }
+        var url = new URL("/admin/Layout/SelectZone", document.baseURI);
+        var layoutId = $(".hide #LayoutId").val();
+        if (layoutId) {
+            url.searchParams.append("layoutId", layoutId);
+        }
+        var pageId = $(".hide #PageId").val();
+        if (pageId) {
+            url.searchParams.append("pageId", pageId);
+        }
+        url.searchParams.append("zoneId", obj.val());
         window.top.Easy.ShowUrlWindow({
-            url: url,
+            url: url.toString(),
             width: 1000,
             title: "选择区域",
             onLoad: function (box) {
@@ -85,7 +100,7 @@ $(function () {
         });
     }).on("click", ".custom-style-editor", function () {
         window.top.Easy.ShowUrlWindow({
-            url: '/js/StyleEditor/index.html',
+            url: '/admin/StyleEditor/Edit',
             width: 1024,
             title: "编辑样式",
             onLoad: function (box) {
@@ -104,44 +119,35 @@ $(function () {
                 $(this.document).find("#confirm").click(function () {
                     obj.val(win.GetSelected());
                     box.close();
+                    obj.trigger("change");
                 });
                 $(this.document).on("click", ".confirm", function () {
                     obj.val($(this).data("result"));
                     box.close();
+                    obj.trigger("change");
                 });
             }
         });
     }).on("submit", "form", function () {
         Easy.Block();
     });
-    $(".form-group select#ZoneID,.form-group select.select").on("mousedown", false);
+    $(".form-group select#ZoneId,.form-group select.select").on("mousedown", false);
+    $(".form-group select#ZoneId").each(function () {
+        if ($(this).val() == "ZONE-X") {
+            $(this).closest(".form-group").hide();
+        }
+    });
 
-    var mainMenu = $("#main-menu");
-    var currentSelect;
-    var match = 0;
-    $("a.menu-item", mainMenu).each(function () {
-        var href = $(this).attr("href");
-        if (href) {
-            if (location.pathname.toLocaleLowerCase().indexOf(href.toLowerCase()) === 0) {
-                if (href.length > match) {
-                    currentSelect = $(this);
-                    match = href.length;
-                }
+    if ($.fn.datetimepicker) {
+        $(".Date:not(input[type=hidden])").each(function () {
+            if (!$(this).prop("readonly") && !$(this).prop("disabled")) {
+                $(this).datetimepicker({ locale: "zh-CN", format: $(this).attr("JsDateFormat") });
+                $(this).closest(".input-group").find(".glyphicon-calendar").click(function () {
+                    $(this).closest(".input-group").find("input").focus();
+                });
             }
-        }
-    });
-    if (currentSelect && currentSelect.size()) {
-        currentSelect.addClass("active");
-        if (currentSelect.parent().hasClass("accordion-inner")) {
-            currentSelect.parent().show();
-            currentSelect.parent().prev().addClass("active");
-        }
+        });
     }
-
-
-    $(".Date").each(function () {
-        $(this).datepicker({ language: "zh-CN", format: $(this).attr("JsDateFormat") });
-    });
     $(document).on("click", ".nav.nav-tabs a", function () {
         $(this).tab('show');
         return false;
@@ -190,24 +196,100 @@ $(function () {
 
 
 
-    $("input.select-image").popover({
-        trigger: "focus",
-        html: true,
-        title: "图片预览",
-        content: function () {
-            var url = $(this).val();
-            if (url) {
-                if (url.indexOf("~") === 0) {
-                    url = url.replace("~", location.origin);
+
+    function popoverImage(ele) {
+        $("input.select-image", ele).popover({
+            trigger: "focus",
+            html: true,
+            title: "图片预览",
+            content: function () {
+                var url = $(this).val();
+                if (url) {
+                    if (url.indexOf("~") === 0) {
+                        url = url.replace("~", location.origin);
+                    }
+                    return '<div style="width:244px;"><img class="opacity-dotted" src="' + url + '"/></div>';
                 }
-                return "<div style='width:244px;'><img src='" + url + "'/></div>";
+                return null;
+            },
+            placement: "bottom"
+        }).trigger("change").parent().addClass("loading");
+    }
+    $(document).on("change", "input.select-image", function () {
+        var url = $(this).val();
+        if (url && url.indexOf("~/") != 0 && url.indexOf("/") != 0 && url.replace("http://", "").replace("https://", "").indexOf(window.location.hostname) != 0) {
+            if ($(this).siblings(".image-local").length == 0) {
+                $('<div class="input-group-addon image-local"><span class="glyphicon glyphicon-floppy-open upload-external"></span></div>').insertAfter($(this));
             }
-            return null;
-        },
-        placement: "bottom"
-    }).parent().addClass("loading");
+        } else {
+            $(this).siblings(".image-local").remove();
+        }
+    });
+    $(document).on("list.added", function (e) {
+        popoverImage(e.target);
+    });
+    popoverImage(document);
+
+    $(document).on("click", ".image-local .upload-external", function () {
+        var group = $(this).closest(".input-group");
+        group.addClass("processing");
+        $.post("/admin/Media/DownLoadExternalImage", { images: [group.find("input").val()] }, function (data) {
+            if (data) {
+                for (var i = 0; i < data.length; i++) {
+                    group.find("input").val(data[i].value).trigger("change");
+                }
+            }
+            group.removeClass("processing");
+        }, "json");
+    });
 
     if (document.addEventListener) {
+        function sliceUpload(target, file, start, result) {
+            var url = "/admin/media/upload";
+            if (start > 0) {
+                url = "/admin/media/appendfile";
+            }
+            var end = start + 1000000;
+            if (end > file.size) {
+                end = file.size;
+            }
+            target.parentNode.classList.add("processing");
+            target.value = "...";
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url);
+            if (end == file.size) {
+                xhr.onload = function (data) {
+                    target.parentNode.classList.remove("processing");
+                    var result = JSON.parse(data.target.response);
+                    if (result.id) {
+                        target.value = "~" + result.url;
+                        $(target).blur().focus();
+                    }
+                }
+            }
+            else {
+                xhr.onload = function (e) {
+                    var result = JSON.parse(e.target.response);
+                    if (result) {
+                        sliceUpload(target, file, end, result);
+                    }
+                }
+            }
+            xhr.onerror = function () {
+                target.parentNode.classList.remove("processing");
+                target.value = "Error!";
+            }
+            var formData = new FormData();
+            formData.append('file', file.slice(start, end),file.name);
+            formData.append("folder", "Images");
+            formData.append("size", file.size);
+            if (result) {
+                formData.append("id", result.id);
+                formData.append("position", start);
+            }
+            xhr.send(formData);
+        }
         document.addEventListener("paste", function (e) {
             if (e.target.className && e.target.className.indexOf("select-image") >= 0) {
                 var target = e.target;
@@ -220,27 +302,8 @@ $(function () {
                 if (cbData && cbData.items) {
                     for (var i = 0; i < cbData.items.length; i++) {
                         if (cbData.items[i].type.indexOf('image') !== -1) {
-                            target.parentNode.className = target.parentNode.className + " processing";
-                            target.value = "图片上传中...";
                             var file = cbData.items[i].getAsFile();
-                            var xhr = new XMLHttpRequest();
-                            xhr.open("POST", "/admin/media/Upload");
-                            xhr.onload = function (data) {
-                                target.parentNode.className = target.parentNode.className.replace(" processing", "");
-                                var result = JSON.parse(data.target.response);
-                                if (result.id) {
-                                    target.value = "~" + result.url;
-                                    $(target).blur().focus();
-                                }
-                            }
-                            xhr.onerror = function () {
-                                target.parentNode.className = target.parentNode.className.replace(" processing", "");
-                                target.value = "图片上传失败";
-                            }
-                            var formData = new FormData();
-                            formData.append('file', file);
-                            formData.append("folder", "图片");
-                            xhr.send(formData);
+                            sliceUpload(target, file, 0);
                             break;
                         }
                     }
@@ -248,22 +311,72 @@ $(function () {
             }
         });
     }
-  
-    $(".input-group .glyphicon.glyphicon-play").popover({
-        trigger: "click",
-        html: true,
-        title: "视频预览",
-        content: function () {
-            var url = $(this).parent().siblings("input").val();
-            if (url) {
-                if (url.indexOf("~") === 0) {
-                    url = url.replace("~", location.origin);
-                }
-                return "<div><video style='width:244px;height:183px' controls='controls' src='" + url + "'>您的浏览器不支持播放该视频</video></div>";
+
+    $(document).on("click", ".input-group .video-play-icon", function () {
+        var url = $(this).closest(".input-group").find(".form-control").val();
+        if (url) {
+            if (url.indexOf("~") === 0) {
+                url = url.replace("~", location.origin);
             }
-            return null;
-        },
-        placement: "left"
+            Easy.PlayVideo(url);
+        }
     });
-    $("#main-menu").slimscroll({ height: $(window).height() - 170 });
+
+    //main menu
+    var mainMenu = $("#main-menu");
+    if (mainMenu.length > 0) {
+        var currentSelect;
+        var match = 0;
+        var pathArray = (location.pathname + location.search).split(/[/|?]/);
+        var menuItems = $("a.menu-item", mainMenu);
+        for (var i = 0; i < menuItems.length; i++) {
+            var href = $(menuItems[i]).attr("href");
+            if (href) {
+                var hrefArray = href.toLowerCase().split(/[/|?]/);
+                var matchCount = 0;
+                var fullMath = true;
+                for (var j = 0; j < pathArray.length; j++) {
+                    if (hrefArray.indexOf(pathArray[j].toLowerCase()) >= 0) {
+                        matchCount++;
+                    } else {
+                        fullMath = false;
+                    }
+                }
+                if (fullMath || matchCount > match) {
+                    match = matchCount;
+                    currentSelect = $(menuItems[i]);
+                    if (fullMath) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (currentSelect && currentSelect.size()) {
+            currentSelect.addClass("active");
+            if (currentSelect.parent().hasClass("accordion-inner")) {
+                currentSelect.parent().show();
+                currentSelect.parent().prev().addClass("active");
+            }
+        }
+
+        var scroll = $(".menu-item.active", mainMenu).offset().top - mainMenu.offset().top;
+        var leftMenu = document.querySelector('#left-menu');
+        function setHeight() {
+            leftMenu.style.height = (window.innerHeight - 133) + "px";
+        }
+        setHeight();
+        var scrollBar = window.Scrollbar.init(leftMenu);
+        $(window).on("resize", function () {
+            Easy.Processor(setHeight, 500);
+        });
+        if (scroll > 0) {
+            scrollBar.scrollTop = scroll/2;
+        }
+    }
+
+
+    if ($.fn.select2) {
+        $("select[multiple='multiple']").select2();
+    }
+    $(".dy-editor:visible").trigger("init-editor");
 });

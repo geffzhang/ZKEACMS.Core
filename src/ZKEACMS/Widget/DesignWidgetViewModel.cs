@@ -1,6 +1,5 @@
 /* http://www.zkea.net/ 
- * Copyright 2017 ZKEASOFT 
- * 深圳市纸壳软件科技有限公司
+ * Copyright (c) ZKEASOFT. All rights reserved. 
  * http://www.zkea.net/licenses */
 
 
@@ -8,12 +7,11 @@ namespace ZKEACMS.Widget
 {
     public class DesignWidgetViewModel : WidgetViewModelPart
     {
-        public DesignWidgetViewModel(WidgetViewModelPart widgetPart, string pageId)
+        public DesignWidgetViewModel(WidgetViewModelPart widgetPart, string pageId) 
+            : base(widgetPart.Widget, widgetPart.ViewModel)
         {
-            PageID = pageId;
-            ViewModel = widgetPart.ViewModel;
-            Widget = widgetPart.Widget;
+            PageId = pageId;
         }
-        public string PageID { get; set; }
+        public string PageId { get; set; }
     }
 }

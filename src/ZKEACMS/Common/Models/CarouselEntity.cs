@@ -1,13 +1,17 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System.Collections.Generic;
 using Easy.MetaData;
 using Easy.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.Common.Models
 {
-    [ViewConfigure(typeof(CarouselEntityMetaData)),Table("Carousel")]
+    [DataTable("Carousel")]
     public class CarouselEntity : EditorEntity
     {
         public CarouselEntity()

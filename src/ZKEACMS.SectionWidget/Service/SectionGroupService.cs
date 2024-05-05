@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,29 +18,24 @@ using Easy.Mvc.Plugin;
 
 namespace ZKEACMS.SectionWidget.Service
 {
-    public class SectionGroupService : ServiceBase<SectionGroup, SectionDbContext>, ISectionGroupService
+    public class SectionGroupService : ServiceBase<SectionGroup, CMSDbContext>, ISectionGroupService
     {
         private readonly ISectionContentProviderService _sectionContentProviderService;
         private readonly IPluginLoader _pluginLoader;
 
         public SectionGroupService(ISectionContentProviderService sectionContentProviderService,
-            IPluginLoader pluginLoader, IApplicationContext applicationContext) : base(applicationContext)
+            IPluginLoader pluginLoader, IApplicationContext applicationContext, CMSDbContext dbContext) : base(applicationContext, dbContext)
         {
             _sectionContentProviderService = sectionContentProviderService;
             _pluginLoader = pluginLoader;
         }
-
-        public override DbSet<SectionGroup> CurrentDbSet
+        public override IQueryable<SectionGroup> Get()
         {
-            get
-            {
-                return DbContext.SectionGroup;
-            }
+            return CurrentDbSet.AsNoTracking();
         }
-
         public SectionGroup GenerateContentFromConfig(SectionGroup group)
         {
-            string configFile = _pluginLoader.GetPlugins().First(m => m.ID == SectionPlug.PluginID).RelativePath + @"\Thumbnail\{0}.xml".FormatWith(group.PartialView);
+            string configFile = PluginBase.GetPath<SectionPlug>().CombinePath("Thumbnail/{0}.xml".FormatWith(group.PartialView).ToFilePath());
             List<SectionContent> contents = new List<SectionContent>();
             if (File.Exists(configFile))
             {
@@ -64,7 +62,7 @@ namespace ZKEACMS.SectionWidget.Service
                                     var name = property.Attributes["name"];
                                     if (name != null && name.Value.IsNotNullAndWhiteSpace() && property.InnerText.IsNotNullAndWhiteSpace())
                                     {
-                                        ClassAction.SetObjPropertyValue(content, name.Value, property.InnerText);
+                                        PropertyHelper.SetValue(content, name.Value, property.InnerText);
                                     }
                                 }
                                 content.SectionGroupId = group.ID;
@@ -79,10 +77,14 @@ namespace ZKEACMS.SectionWidget.Service
             group.SectionContents = contents;
             return group;
         }
-        public override void Add(SectionGroup item)
+        public override ServiceResult<SectionGroup> Add(SectionGroup item)
         {
             item.ID = Guid.NewGuid().ToString("N");
-            base.Add(item);
+            var result = base.Add(item);
+            if (result.HasViolation)
+            {
+                return result;
+            }
             if (item.SectionContents != null && item.SectionContents.Any())
             {
                 item.SectionContents.Each(m =>
@@ -103,18 +105,19 @@ namespace ZKEACMS.SectionWidget.Service
                     });
                 }
             }
+            return result;
         }
-        public override void Remove(SectionGroup item, bool saveImmediately = true)
+        public override void Remove(SectionGroup item)
         {
             if (item != null)
             {
-                var contents = _sectionContentProviderService.Get(m => m.SectionGroupId == item.ID).ToList();
+                var contents = _sectionContentProviderService.Get(m => m.SectionGroupId == item.ID);
                 contents.Each(m =>
                 {
                     _sectionContentProviderService.Remove(m.ID);
                 });
             }
-            base.Remove(item, saveImmediately);
+            base.Remove(item);
         }
     }
 }

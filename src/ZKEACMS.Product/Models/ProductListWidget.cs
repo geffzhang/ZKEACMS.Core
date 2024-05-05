@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,10 +16,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Easy.Constant;
 using System.Linq;
 using ZKEACMS.Extend;
+using Easy.RepositoryPattern;
 
 namespace ZKEACMS.Product.Models
 {
-    [ViewConfigure(typeof(ProductListWidgetMetaData)), Table("ProductListWidget")]
+    [DataTable("ProductListWidget")]
     public class ProductListWidget : BasicWidget
     {
         public bool IsPageable { get; set; }
@@ -31,16 +35,14 @@ namespace ZKEACMS.Product.Models
         protected override void ViewConfigure()
         {
             base.ViewConfigure();
-            ViewConfig(m => m.ProductCategoryID).AsDropDownList().DataSource(() =>
-            {
-                return ServiceLocator.GetService<IProductCategoryService>().Get().ToDictionary(m => m.ID.ToString(), m => m.Title);
-            }).Required().Order(NextOrder()).AddClass("select").AddProperty("data-url", "/admin/ProductCategory/Select");
+            ViewConfig(m => m.Title).AsHidden();
+            ViewConfig(m => m.ProductCategoryID).AsDropDownList().SetTemplate("ProductCategoryTree").Required().Order(NextOrder());
 
-            ViewConfig(m => m.DetailPageUrl).AsTextBox().Order(NextOrder()).PageSelector();
+            ViewConfig(m => m.DetailPageUrl).AsTextBox().Order(NextOrder()).PageSelector().InnerUrl();
             ViewConfig(m => m.IsPageable).AsCheckBox().Order(NextOrder());
             ViewConfig(m => m.PageSize).AsTextBox().Order(NextOrder()).Range(1, 50);
             ViewConfig(m => m.Columns).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary);
-            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary);
+            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary).AsWidgetTemplateChooser();
         }
     }
 

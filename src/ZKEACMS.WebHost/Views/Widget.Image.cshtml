@@ -1,14 +1,37 @@
-﻿@model ZKEACMS.Common.Models.ImageWidget
-
+@model ZKEACMS.Common.Models.ImageWidget
 <div class="widget-image">
     @if (Model.Link.IsNullOrEmpty())
     {
-        <img alt="@Model.AltText" src="@Url.PathContent(Model.ImageUrl)" style="width: @(Model.Width.HasValue ? Model.Width.Value + "px" : "auto"); height: @(Model.Height.HasValue ? Model.Height.Value + "px" : "auto");"/>
+        <picture>
+            @if (Model.ImageUrlSm.IsNotNullAndWhiteSpace())
+            {
+                <source srcset="@Url.PathContent(Model.ImageUrlSm)" media="(max-width: 767px)">
+            }
+            @if (Model.ImageUrlMd.IsNotNullAndWhiteSpace())
+            {
+                <source srcset="@Url.PathContent(Model.ImageUrlMd)" media="(max-width: 991px)">
+            }
+            <img alt="@Model.AltText"
+                 src="@Url.PathContent(Model.ImageUrl)"
+                 style="object-fit:cover;@(Model.Width.HasValue ? $"width:{Model.Width}px;" : string.Empty)@(Model.Height.HasValue ? $"height:{Model.Height}px;" : string.Empty)" />
+        </picture>
     }
     else
     {
         <a href="@Url.Content(Model.Link)" target="@Html.SmartLinkTarget(Model.Link)">
-            <img alt="@Model.AltText" src="@Url.PathContent(Model.ImageUrl)" style="width: @(Model.Width.HasValue ? Model.Width.Value + "px" : "auto"); height: @(Model.Height.HasValue ? Model.Height.Value + "px" : "auto");" />
+            <picture>
+                @if (Model.ImageUrlSm.IsNotNullAndWhiteSpace())
+                {
+                    <source srcset="@Url.PathContent(Model.ImageUrlSm)" media="(max-width: 767px)">
+                }
+                @if (Model.ImageUrlMd.IsNotNullAndWhiteSpace())
+                {
+                    <source srcset="@Url.PathContent(Model.ImageUrlMd)" media="(max-width: 991px)">
+                }
+                <img alt="@Model.AltText"
+                     src="@Url.PathContent(Model.ImageUrl)"
+                     style="object-fit:cover;@(Model.Width.HasValue ? $"width:{Model.Width}px;" : string.Empty)@(Model.Height.HasValue ? $"height:{Model.Height}px;" : string.Empty)" />
+            </picture>
         </a>
     }
 </div>

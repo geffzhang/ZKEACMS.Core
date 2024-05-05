@@ -1,30 +1,29 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using ZKEACMS.SectionWidget.Models;
 using Easy.RepositoryPattern;
 using Easy;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 
 namespace ZKEACMS.SectionWidget.Service
 {
-    public class SectionContentCallToActionService : ServiceBase<SectionContentCallToAction, SectionDbContext>, ISectionContentService
+    public class SectionContentCallToActionService : ServiceBase<SectionContentCallToAction, CMSDbContext>, ISectionContentService, ISectionContentCallToActionService
     {
-        public SectionContentCallToActionService(IApplicationContext applicationContext) : base(applicationContext)
+        public SectionContentCallToActionService(IApplicationContext applicationContext, CMSDbContext dbContext) : base(applicationContext, dbContext)
         {
-        }
-
-        public override DbSet<SectionContentCallToAction> CurrentDbSet
-        {
-            get
-            {
-                return DbContext.SectionContentCallToAction;
-            }
         }
         public SectionContentBase.Types ContentType
         {
             get { return SectionContentBase.Types.CallToAction; }
         }
-
+        public override IQueryable<SectionContentCallToAction> Get()
+        {
+            return CurrentDbSet.AsNoTracking();
+        }
 
         public void AddContent(SectionContent content)
         {
@@ -46,6 +45,16 @@ namespace ZKEACMS.SectionWidget.Service
         public void UpdateContent(SectionContent content)
         {
             Update(content as SectionContentCallToAction);
+        }
+
+        public void UpdateDetailPageUrl(string oldUrl, string newUrl)
+        {
+            var contents = Get(m => m.Href == oldUrl || m.Href.StartsWith(oldUrl + "/"));
+            foreach (var item in contents)
+            {
+                item.Href = newUrl + item.Href.Substring(oldUrl.Length);
+            }
+            UpdateRange(contents.ToArray());
         }
     }
 }

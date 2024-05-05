@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy.Extend;
 using Easy.Mvc.Attribute;
 using ZKEACMS.Zone;
@@ -7,10 +10,12 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Easy;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
+using ZKEACMS.Page;
 
 namespace ZKEACMS.Widget
 {
-    public class ViewDataZonesAttribute : ViewDataAttribute
+    public class ViewDataZonesAttribute : Easy.Mvc.Attribute.ViewDataAttribute
     {
         public override void OnActionExecuted(ActionExecutedContext filterContext)
         {
@@ -21,13 +26,19 @@ namespace ZKEACMS.Widget
                 {
                     WidgetBase widget = result.Model as WidgetBase;
                     var zoneService = filterContext.HttpContext.RequestServices.GetService<IZoneService>();
-                    if (!widget.PageID.IsNullOrEmpty())
+                    if (!widget.PageId.IsNullOrEmpty())
                     {
-                        (filterContext.Controller as Controller).ViewData[ViewDataKeys.Zones] = new SelectList(zoneService.GetZonesByPageId(widget.PageID), "HeadingCode", "ZoneName");
+                        var pageService = filterContext.HttpContext.RequestServices.GetService<IPageService>();
+                        (filterContext.Controller as Controller).ViewData[ViewDataKeys.Zones] = new SelectList(zoneService.GetByPage(pageService.Get(widget.PageId)), "HeadingCode", "ZoneName");
                     }
-                    else if (!widget.LayoutID.IsNullOrEmpty())
+                    else if (!widget.LayoutId.IsNullOrEmpty())
                     {
-                        (filterContext.Controller as Controller).ViewData[ViewDataKeys.Zones] = new SelectList(zoneService.GetZonesByLayoutId(widget.LayoutID), "HeadingCode", "ZoneName");
+                        (filterContext.Controller as Controller).ViewData[ViewDataKeys.Zones] = new SelectList(zoneService.GetByLayoutId(widget.LayoutId), "HeadingCode", "ZoneName");
+                    }
+                    else
+                    {
+                        var localize = filterContext.HttpContext.RequestServices.GetService<ILocalize>();
+                        (filterContext.Controller as Controller).ViewData[ViewDataKeys.Zones] = new SelectList(new List<ZoneEntity> { new ZoneEntity { HeadingCode = "ZONE-X", ZoneName = localize.Get("Dynamic") } }, "HeadingCode", "ZoneName");
                     }
                 }
             }

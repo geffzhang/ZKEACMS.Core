@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using System;
 using System.Collections.Generic;
 using ZKEACMS.Common.Service;
@@ -11,10 +14,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.DependencyInjection;
 using Easy.Constant;
+using Easy.RepositoryPattern;
+using ZKEACMS.Extend;
 
 namespace ZKEACMS.Common.Models
 {
-    [ViewConfigure(typeof(CarouselWidgetMetaData)), Table("CarouselWidget")]
+    [DataTable("CarouselWidget")]
     public class CarouselWidget : BasicWidget
     {
         public CarouselWidget()
@@ -31,17 +36,18 @@ namespace ZKEACMS.Common.Models
         {
             base.ViewConfigure();
             ViewConfig(m => m.ID).AsHidden();
+            ViewConfig(m => m.Title).AsHidden();
+            ViewConfig(m => m.CarouselItems).AsListEditor().Order(NextOrder());
             ViewConfig(m => m.CarouselID).AsDropDownList().Order(NextOrder()).DataSource(() =>
             {
-                var result = new Dictionary<string, string> { { "", "---请选择---" } };
+                var result = new Dictionary<string, string> { { "", "-- Select --" } };
                 using (var carouselService = ServiceLocator.GetService<ICarouselService>())
                 {
                     carouselService.Get().Each(m => result.Add(m.ID.ToString(), m.Title));
                     return result;
                 }
             });
-            ViewConfig(m => m.CarouselItems).AsListEditor().Order(NextOrder());
-            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary);
+            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary).AsWidgetTemplateChooser();
         }
     }
 

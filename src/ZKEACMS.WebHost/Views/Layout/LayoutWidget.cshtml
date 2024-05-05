@@ -1,28 +1,28 @@
-﻿@using ZKEACMS.Common
+@using ZKEACMS.Common
 @model IEnumerable<LayoutEntity>
 @{
     Script.Reqiured("jQueryUi").AtFoot();
 }
-<div class="container-fluid">
+<div>
     <div class="row">
         <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    布局组件
+                    @L("Layout Content")
                 </div>
                 <div class="panel-body">
                     <ul id="layouts" class="fullRowList">
                         @foreach (LayoutEntity item in Model)
                         {
-                            <li id="@item.ID" class="clearfix" data-id="@item.ID">
+                            <li id="@item.ID" class="clearfix muted" data-id="@item.ID">
                                 <div class="pull-left">
                                     <i class="glyphicon glyphicon-equalizer"></i> @item.LayoutName
                                 </div>
                                 @if (Authorizer.Authorize(PermissionKeys.ManageLayout))
                                 {
                                     <div class="pull-right">
-                                        <a href="@Url.Action("Design", new {item.ID})" title="设计">
-                                            <i class="glyphicon glyphicon-edit"></i>
+                                        <a href="@Url.Action("Design", new {item.ID})" title="@L("Design")">
+                                            <img class="icon" src="~/images/icons/edit.svg" />
                                         </a>
                                     </div>
                                 }
@@ -41,21 +41,26 @@
 @using (Script.AtFoot())
 {
     <script type="text/javascript">
-        $(function () {
+        $(function () {            
             if (!location.hash) {
-                location.hash = '@ViewBag.LayoutID';
+                location.hash = '@ViewBag.LayoutId';
             }
             if (location.hash && location.hash != "#") {
                 $("li" + location.hash).trigger("click");
+            }
+            else if ($("#layouts>li.actived").size() === 0) {
+                $("#layouts>li").first().trigger("click");
             }
         });
 
         $(document).on("click", ".fullRowList .delete", function () {
             var id = $(this).data("widgetid");
-            if (confirm("确定要删除该组件吗？")) {
-                $.post("@Url.Action("DeleteWidget", "Widget")", { ID: id }, function (data) {
-                    if (data) {
+            if (confirm("@L("Do you want to delete?")")) {
+                $.post("@Url.Action("DeleteWidget", "Widget")", { ID: id, permanent: true }, function (data) {
+                    if (data.actionType == @((int)ActionType.Delete)) {
                         $("#widget_" + id).remove();
+                    } else if (data.actionType == @((int)ActionType.Update)) {
+                        $("#widget_" + id).addClass("disabled");
                     }
                 }, "json");
             }
@@ -68,6 +73,6 @@
             $.post("@Url.Action("LayoutZones", "Layout", new { module="admin"})", { ID: $(this).data("id") }, function (html) {
                 layoutZones.html(html);
             }, "html");
-        });
+            });
     </script>
 }

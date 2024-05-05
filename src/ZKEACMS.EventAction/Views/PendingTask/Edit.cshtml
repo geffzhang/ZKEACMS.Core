@@ -1,0 +1,24 @@
+﻿@model ZKEACMS.EventAction.Models.PendingTaskEntity
+@{
+    Script.Reqiured("validate").AtFoot();
+    Script.Reqiured("tinymce").AtFoot();
+}
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        @L("Edit")
+    </div>
+    <div class="panel-body">
+        @using (Html.BeginForm())
+        {
+            @Html.EditorForModel()
+            <div class="toolBar">
+                @if (Authorizer.Authorize(ZKEACMS.EventAction.PermissionKeys.ManageEventNotification))
+                {
+                    <input type="submit" class="btn btn-danger" value="@L("Retry")" data-value="@ActionType.UpdateAndExit" />
+                }
+                <a class="btn btn-default" href="@Url.Action("Index")">@L("Cancel")</a>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,20 @@
+﻿@model string
+@{
+    Script.Reqiured("code-editor").AtFoot();
+    string name = ViewData.TemplateInfo.GetFullHtmlFieldName("");
+    var descriptor = ViewData.ModelMetadata.GetViewDescriptor();
+    
+    if (descriptor != null && !descriptor.Properties.ContainsKey("rows"))
+    {
+        descriptor.Properties.Add("rows", "5");
+    }
+}
+@Html.TextArea("", Model, descriptor?.ToHtmlProperties())
+@using (Script.AtFoot())
+{
+    <script type="text/javascript">
+        (function () {
+            codeEditor.createAsync(document.getElementById('@name'));
+        })();
+    </script>
+}

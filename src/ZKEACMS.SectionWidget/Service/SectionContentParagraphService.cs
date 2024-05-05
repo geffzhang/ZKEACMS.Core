@@ -1,30 +1,31 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using ZKEACMS.SectionWidget.Models;
 using Easy.RepositoryPattern;
 using Easy;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 
 namespace ZKEACMS.SectionWidget.Service
 {
-    public class SectionContentParagraphService : ServiceBase<SectionContentParagraph, SectionDbContext>, ISectionContentService
+    public class SectionContentParagraphService : ServiceBase<SectionContentParagraph, CMSDbContext>, ISectionContentService
     {
-        public SectionContentParagraphService(IApplicationContext applicationContext) : base(applicationContext)
+        public SectionContentParagraphService(IApplicationContext applicationContext, CMSDbContext dbContext) : base(applicationContext, dbContext)
         {
         }
-        public override DbSet<SectionContentParagraph> CurrentDbSet
-        {
-            get
-            {
-                return DbContext.SectionContentParagraph;
-            }
-        }
+
         public SectionContentBase.Types ContentType
         {
             get { return SectionContentBase.Types.Paragraph; }
         }
 
-
+        public override IQueryable<SectionContentParagraph> Get()
+        {
+            return CurrentDbSet.AsNoTracking();
+        }
 
         public void AddContent(SectionContent content)
         {

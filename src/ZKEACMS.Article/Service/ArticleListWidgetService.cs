@@ -1,4 +1,7 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
+/* http://www.zkea.net/ 
+ * Copyright (c) ZKEASOFT. All rights reserved. 
+ * http://www.zkea.net/licenses */
+
 using Easy;
 using Easy.RepositoryPattern;
 using Microsoft.AspNetCore.Http;
@@ -13,29 +16,22 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using ZKEACMS.Page;
 using Easy.Extend;
+using Easy.Constant;
 
 namespace ZKEACMS.Article.Service
 {
-    public class ArticleListWidgetService : WidgetService<ArticleListWidget, ArticleDbContext>
+    public class ArticleListWidgetService : WidgetService<ArticleListWidget>
     {
         private readonly IArticleTypeService _articleTypeService;
         private readonly IArticleService _articleService;
         private readonly IPageService _pageService;
         public ArticleListWidgetService(IWidgetBasePartService widgetService, IArticleTypeService articleTypeService,
-            IArticleService articleService, IApplicationContext applicationContext, IPageService pageService)
-            : base(widgetService, applicationContext)
+            IArticleService articleService, IApplicationContext applicationContext, IPageService pageService, CMSDbContext dbContext)
+            : base(widgetService, applicationContext, dbContext)
         {
             _articleTypeService = articleTypeService;
             _articleService = articleService;
             _pageService = pageService;
-        }
-
-        public override DbSet<ArticleListWidget> CurrentDbSet
-        {
-            get
-            {
-                return DbContext.ArticleListWidget;
-            }
         }
 
         private string GetDetailPageUrl()
@@ -43,27 +39,22 @@ namespace ZKEACMS.Article.Service
             var baseDetail = WidgetBasePartService.Get(m => m.ServiceTypeName == "ZKEACMS.Article.Service.ArticleDetailWidgetService").FirstOrDefault();
             if (baseDetail != null)
             {
-                var page = _pageService.Get(baseDetail.PageID);
+                var page = _pageService.Get(baseDetail.PageId);
                 if (page != null)
                 {
                     return page.Url;
                 }
             }
-            return "~/View-Article";
+            return "~/article-detail";
         }
 
-        public override void Add(ArticleListWidget item)
+        public override ServiceResult<ArticleListWidget> Add(ArticleListWidget item)
         {
             if (item.DetailPageUrl.IsNullOrEmpty())
             {
                 item.DetailPageUrl = GetDetailPageUrl();
             }
-            if (!item.PageSize.HasValue || item.PageSize.Value == 0)
-            {
-                item.PageSize = 5;
-            }
-            item.IsPageable = true;
-            base.Add(item);
+            return base.Add(item);
         }
 
         public override ArticleListWidget Get(params object[] primaryKeys)
@@ -77,10 +68,11 @@ namespace ZKEACMS.Article.Service
             return widget;
         }
 
-        public override WidgetViewModelPart Display(WidgetBase widget, ActionContext actionContext)
+        public override object Display(WidgetDisplayContext widgetDisplayContext)
         {
-            var currentWidget = widget as ArticleListWidget;
+            var currentWidget = widgetDisplayContext.Widget as ArticleListWidget;
             var categoryEntity = _articleTypeService.Get(currentWidget.ArticleTypeID);
+            var actionContext = widgetDisplayContext.ActionContext;
             int pageIndex = actionContext.RouteData.GetPage();
             int cate = actionContext.RouteData.GetCategory();
             var pagin = new Pagination
@@ -94,45 +86,39 @@ namespace ZKEACMS.Article.Service
             Expression<Func<ArticleEntity, bool>> filter = null;
             if (cate != 0)
             {
-                filter = m => m.IsPublish && m.ArticleTypeID == cate;
+                filter = m => m.Status == (int)RecordStatus.Active && m.IsPublish && m.ArticleTypeID == cate;
             }
             else
             {
                 var ids = _articleTypeService.Get(m => m.ID == currentWidget.ArticleTypeID || m.ParentID == currentWidget.ArticleTypeID).Select(m => m.ID).ToList();
                 if (ids.Any())
                 {
-                    filter = m => m.IsPublish && ids.Contains(m.ArticleTypeID ?? 0);
+                    filter = m => m.Status == (int)RecordStatus.Active && m.IsPublish && ids.Contains(m.ArticleTypeID ?? 0);
                 }
                 else
                 {
-                    filter = m => m.IsPublish && m.ArticleTypeID == currentWidget.ArticleTypeID;
+                    filter = m => m.Status == (int)RecordStatus.Active && m.IsPublish && m.ArticleTypeID == currentWidget.ArticleTypeID;
                 }
 
             }
             if (currentWidget.IsPageable)
             {
-                articles = _articleService.Get(filter, pagin).ToList();
+                articles = _articleService.Get(filter, pagin);
             }
             else
             {
-                articles = _articleService.Get(filter).OrderByDescending(m => m.PublishDate).ToList();
+                articles = _articleService.Get().Where(filter).OrderByDescending(m => m.PublishDate).ToList();
             }
 
-            var currentArticleType = _articleTypeService.Get(cate == 0 ? currentWidget.ArticleTypeID : cate);
-            if (currentArticleType != null)
-            {
-                var page = actionContext.HttpContext.GetLayout().Page;
-                page.Title = (page.Title ?? "") + " - " + currentArticleType.Title;
-            }
-
-            return widget.ToWidgetViewModelPart(new ArticleListWidgetViewModel
+            return new ArticleListWidgetViewModel
             {
                 Articles = articles,
                 Widget = currentWidget,
                 Pagin = pagin,
                 CategoryTitle = categoryEntity == null ? "" : categoryEntity.Title,
                 IsPageable = currentWidget.IsPageable
-            });
+            };
         }
+
     }
 }
